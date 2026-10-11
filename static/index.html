@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="面向 LLM Application Engineer 的本地面试答题本"
+    />
+    <title>面试答题本 · Interview Deck</title>
+    <link rel="stylesheet" href="/static/styles.css?v=1.5.1" />
+  </head>
+  <body>
+    <div class="ambient ambient-one"></div>
+    <div class="ambient ambient-two"></div>
+
+    <main class="app-shell">
+      <header class="site-header">
+        <div class="header-leading">
+          <button
+            class="brand-mark-button"
+            id="brandMarkButton"
+            type="button"
+            aria-label="返回方向选择"
+            aria-controls="directoryDrawer"
+            aria-expanded="false"
+          >
+            <span class="brand-mark" aria-hidden="true">答</span>
+          </button>
+          <div class="brand-copy">
+            <span>
+              <strong>面试答题本</strong>
+              <small>INTERVIEW DECK</small>
+            </span>
+          </div>
+        </div>
+        <div class="header-stats" aria-label="题库统计">
+          <span><b id="studiedCount">—</b> 正确</span>
+          <i></i>
+          <span><b id="wrongCount">—</b> 错误</span>
+          <i></i>
+          <span><b id="totalCount">—</b> 题目</span>
+          <button
+            class="reset-progress-button"
+            id="resetProgressButton"
+            type="button"
+            aria-label="清空全部练习进度"
+            title="清空全部练习进度"
+          >
+            Reset
+          </button>
+        </div>
+      </header>
+
+      <section class="setup-view" id="setupView" aria-labelledby="setupTitle">
+        <h1 class="visually-hidden" id="setupTitle">选择使用模式和题目方向</h1>
+
+        <div class="mode-picker" aria-label="使用模式">
+          <button
+            class="mode-card"
+            id="quizModeButton"
+            type="button"
+            aria-pressed="true"
+          >
+            <span class="mode-icon" aria-hidden="true">答</span>
+            <span class="mode-copy">
+              <small>练习模式</small>
+              <strong>答题</strong>
+              <span>随机抽题，先思考再显示答案</span>
+            </span>
+            <span class="mode-check" aria-hidden="true"></span>
+          </button>
+          <button
+            class="mode-card"
+            id="libraryModeButton"
+            type="button"
+            aria-pressed="false"
+          >
+            <span class="mode-icon" aria-hidden="true">库</span>
+            <span class="mode-copy">
+              <small>查阅模式</small>
+              <strong>题库</strong>
+              <span>按方向浏览全部内容和完整参考答案</span>
+            </span>
+            <span class="mode-check" aria-hidden="true"></span>
+          </button>
+        </div>
+
+        <div class="scope-section" aria-labelledby="scopeTitle">
+          <div class="scope-heading">
+            <div>
+              <small>内容范围</small>
+              <h2 id="scopeTitle">这次学习哪些内容？</h2>
+            </div>
+            <p>内容范围和方向同时作用于答题与题库。</p>
+          </div>
+          <div class="scope-picker" role="group" aria-label="内容范围">
+            <button
+              class="scope-option"
+              id="foundationScopeButton"
+              type="button"
+              aria-pressed="false"
+              data-scope="foundation"
+            >
+              <strong>仅基础知识</strong>
+              <span>详细定义、机制、示例和常见误区</span>
+            </button>
+            <button
+              class="scope-option"
+              id="combinedScopeButton"
+              type="button"
+              aria-pressed="true"
+              data-scope="combined"
+            >
+              <strong>综合学习</strong>
+              <span>基础知识 + 面试题</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="selection-toolbar">
+          <p id="selectionSummary">正在载入题库…</p>
+          <div>
+            <button class="text-button" id="selectAllButton" type="button">全选</button>
+            <button class="text-button" id="clearButton" type="button">清空</button>
+          </div>
+        </div>
+
+        <div class="topic-grid" id="topicGrid" aria-live="polite"></div>
+
+        <div class="start-panel">
+          <div>
+            <span class="save-status" id="saveStatus">
+              <span class="status-dot"></span>
+              内容范围与方向会自动保存
+            </span>
+            <p>方向与评价保存在本机；正确题在 Reset 前不再抽取。</p>
+          </div>
+          <button class="primary-button" id="startButton" type="button" disabled>
+            <span id="startButtonLabel">开始答题</span>
+            <span class="button-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="quiz-view is-hidden" id="quizView" aria-live="polite">
+        <div class="quiz-toolbar">
+          <button class="back-button" id="backButton" type="button">
+            <span aria-hidden="true">←</span> 修改方向
+          </button>
+          <span id="cycleLabel">第 1 轮</span>
+        </div>
+
+        <article class="question-card" id="questionCard">
+          <div class="question-meta">
+            <span class="question-number" id="questionNumber">QUESTION</span>
+            <div class="meta-pills">
+              <span id="difficultyPill">—</span>
+              <span id="kindPill">—</span>
+            </div>
+          </div>
+
+          <div class="question-body">
+            <div class="topic-tags" id="questionTopics"></div>
+            <h2 id="questionText">正在准备题目…</h2>
+          </div>
+
+          <div class="answer-panel is-collapsed" id="answerPanel">
+            <div class="answer-divider">
+              <span>参考答案</span>
+            </div>
+            <div class="answer-content" id="answerContent"></div>
+            <details class="source-details">
+              <summary>题目来源</summary>
+              <p id="sourceText"></p>
+            </details>
+          </div>
+
+          <div class="loading-layer is-hidden" id="loadingLayer" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+        </article>
+
+        <p id="resultStatus" class="pool-status" aria-live="polite"></p>
+        <div class="quiz-actions is-hidden" id="ratingActions">
+          <button class="primary-button" id="correctButton" type="button">正确</button>
+          <button class="secondary-button wrong-button" id="wrongButton" type="button">错误</button>
+        </div>
+        <div class="quiz-actions">
+          <button class="secondary-button" id="previousButton" type="button">上一题</button>
+          <button class="secondary-button" id="answerButton" type="button">
+            显示答案
+            <kbd>A</kbd>
+          </button>
+          <button class="primary-button next-button is-hidden" id="nextButton" type="button">
+            下一题
+            <kbd>N</kbd>
+          </button>
+        </div>
+        <button class="primary-button is-hidden" id="completionHomeButton" type="button">返回首页</button>
+        <div class="quiz-actions is-hidden" id="reviewActions">
+          <button class="secondary-button" id="reviewWrongButton" type="button">重新练习错题</button>
+          <button class="primary-button" id="reviewRemainingButton" type="button">练习未答题 + 错题</button>
+        </div>
+        <p class="pool-status" id="poolStatus"></p>
+      </section>
+
+      <section class="library-view is-hidden" id="libraryView" aria-live="polite">
+        <div class="library-toolbar">
+          <button class="back-button" id="libraryBackButton" type="button">
+            <span aria-hidden="true">←</span> 修改方向
+          </button>
+          <span id="libraryCount">正在读取题库…</span>
+        </div>
+
+        <div class="library-heading">
+          <p id="libraryScopeLabel">题目与参考答案</p>
+          <h2>题库</h2>
+          <span>按主方向归类且只展示一次；浏览不会改变正确数量或题目评价。</span>
+        </div>
+
+        <div class="result-filter" role="group" aria-label="题库评价筛选">
+          <button class="secondary-button" type="button" data-result-filter="all" aria-pressed="true">全部</button>
+          <button class="secondary-button" type="button" data-result-filter="correct" aria-pressed="false">正确</button>
+          <button class="secondary-button" type="button" data-result-filter="wrong" aria-pressed="false">错误</button>
+        </div>
+        <div class="library-list" id="libraryList"></div>
+        <div class="library-state is-hidden" id="libraryState"></div>
+
+      </section>
+    </main>
+
+    <div class="drawer-backdrop is-hidden" id="drawerBackdrop"></div>
+    <aside
+      class="directory-drawer"
+      id="directoryDrawer"
+      aria-hidden="true"
+      aria-labelledby="directoryTitle"
+      tabindex="-1"
+    >
+      <button class="drawer-home-button" id="drawerHomeButton" type="button">
+        <span aria-hidden="true">←</span> 返回首页
+      </button>
+      <div class="drawer-header">
+        <div>
+          <small>LIBRARY INDEX</small>
+          <h2 id="directoryTitle">题库目录</h2>
+        </div>
+        <button class="drawer-close" id="directoryCloseButton" type="button" aria-label="关闭目录">×</button>
+      </div>
+      <nav class="directory-nav" id="directoryNav" aria-label="题库分组目录"></nav>
+    </aside>
+
+    <div class="toast is-hidden" id="toast" role="status"></div>
+    <script src="/static/app.js?v=1.5.1" defer></script>
+  </body>
+</html>

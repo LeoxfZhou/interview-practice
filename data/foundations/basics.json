@@ -1,0 +1,212 @@
+[
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "primary_topic": "python",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#python",
+    "id": "public-kb-python-01",
+    "prompt": "生成器 (Generator)",
+    "answer": "**定义 (Definition)**\n生成器按需产生值，而不是先构建完整结果列表。调用含 yield 的函数会得到生成器对象。\n\n**工作机制 (Mechanism)**\n迭代请求触发函数执行，yield 暂停执行并保存局部状态；下一次迭代从暂停点继续。它通常是单次消费的迭代器。\n\n**使用场景与示例 (Example)**\n读取大批记录时，可以逐条清洗并交给下游，不必同时保存所有清洗结果。\n\n**边界与误区 (Limitations)**\n节省的是不必保留全部结果的内存；生成器内部仍可能创建大对象。需要随机访问或反复遍历时，列表可能更合适。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。\n\n**代码示例**\n```python\ndef squares(count):\n    # 每次迭代只产生一个平方数，不提前创建整个列表。\n    for number in range(count):\n        yield number * number\n\nvalues = squares(3)\nprint(next(values))  # 消费第一个值。\nprint(list(values))  # 只收集剩余值；此处会分配列表内存。\nprint(list(values))  # 迭代器已耗尽，不会自动从头开始。\n```\n\n**示例输出 (Example Output)**\n```text\n0\n[1, 4]\n[]\n```",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "algorithm"
+    ],
+    "primary_topic": "algorithm",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#algorithm",
+    "id": "public-kb-algorithm-01",
+    "prompt": "算法复杂度 (Algorithmic Complexity)",
+    "answer": "**定义 (Definition)**\n复杂度描述输入规模增长时，算法所需时间或额外空间的增长趋势。\n\n**工作机制 (Mechanism)**\n先定义输入规模 n，再统计主要操作次数。大 O 给渐近上界，常数和低阶项在渐近分析中通常略去。\n\n**使用场景与示例 (Example)**\n线性扫描最多查看 n 个元素；在有序序列上二分查找，每次排除约一半候选。\n\n**边界与误区 (Limitations)**\n同属 O(n) 的实现实际耗时仍可能差很多。基准测试需要相同输入、环境和测量口径。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "fundamentals"
+    ],
+    "primary_topic": "fundamentals",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#fundamentals",
+    "id": "public-kb-fundamentals-01",
+    "prompt": "超时 (Timeout)",
+    "answer": "**定义 (Definition)**\n超时限制某个操作或阶段可以等待多久，防止请求无限占用资源。\n\n**工作机制 (Mechanism)**\n连接、读取、队列等待和整个请求可以有不同预算。各阶段预算应服从总截止时间，重试不能无限重置总预算。\n\n**使用场景与示例 (Example)**\n建立连接成功后，对方仍可能迟迟不返回数据，因此连接超时不能代替读取超时。\n\n**边界与误区 (Limitations)**\n客户端超时不证明服务端没有执行成功。重试有副作用的操作需要幂等设计。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "primary_topic": "ml",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#ml",
+    "id": "public-kb-ml-01",
+    "prompt": "数据泄漏 (Data Leakage)",
+    "answer": "**定义 (Definition)**\n训练或评估使用了在目标预测时本不应获得的信息，使评估高估实际能力。\n\n**工作机制 (Mechanism)**\n先按真实应用的数据边界划分集合，再只在训练集拟合预处理与模型；相关实体、近重复样本和时间顺序也要考虑。\n\n**使用场景与示例 (Example)**\n同一文档的近重复段落进入训练和测试两侧，模型可能依靠记忆取得高分。\n\n**边界与误区 (Limitations)**\n不同文件名不证明样本独立；过度根据测试结果反复选方案，也会削弱最终测试的独立性。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S2",
+    "topics": [
+      "transformer"
+    ],
+    "primary_topic": "transformer",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#transformer",
+    "id": "public-kb-transformer-01",
+    "prompt": "自注意力 (Self-Attention)",
+    "answer": "**定义 (Definition)**\n自注意力让序列位置根据与其他位置的相关程度聚合信息。\n\n**工作机制 (Mechanism)**\n输入映射为查询 Q、键 K、值 V；查询与键形成分数，经掩码和归一化后，对值加权求和。因果掩码限制访问未来位置。\n\n**使用场景与示例 (Example)**\n处理“它”时，可从前面的对象描述获取上下文，而不是只看当前词。\n\n**边界与误区 (Limitations)**\n注意力权重不是可靠的因果解释。位置表示、掩码和张量维度错误都可能让模型表面可运行却学习错误关系。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "primary_topic": "llm",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#llm",
+    "id": "public-kb-llm-01",
+    "prompt": "结构化输出 (Structured Output)",
+    "answer": "**定义 (Definition)**\n结构化输出要求模型结果符合明确字段与类型，便于程序进一步处理。\n\n**工作机制 (Mechanism)**\n定义契约后生成候选，程序进行解析、类型与取值校验，再检查授权、来源与业务约束。模型结果仍是不可信输入。\n\n**使用场景与示例 (Example)**\n整数类型的数量99可能合法，但如果来源只支持2，仍需要拒绝或复核。\n\n**边界与误区 (Limitations)**\n格式正确不是语义正确；自动修复输出时不能默默替模型创造缺失事实。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S4",
+    "topics": [
+      "rag"
+    ],
+    "primary_topic": "rag",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#rag",
+    "id": "public-kb-rag-01",
+    "prompt": "检索增强生成 (Retrieval-Augmented Generation)",
+    "answer": "**定义 (Definition)**\nRAG 在回答前检索外部资料，将相关证据提供给生成模型。\n\n**工作机制 (Mechanism)**\n离线解析、切块、建立索引；在线授权过滤、召回、重排、构造上下文、生成与引用检查。资料与索引需要版本管理。\n\n**使用场景与示例 (Example)**\n产品手册更新后，可更新检索资料，而不必仅为这次事实变更重新训练生成模型。\n\n**边界与误区 (Limitations)**\n检索到相关文本不代表它正确、有效或有权访问。缺证据时应说明限制，而非把常识冒充来源事实。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S7",
+    "topics": [
+      "agent"
+    ],
+    "primary_topic": "agent",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#agent",
+    "id": "public-kb-agent-01",
+    "prompt": "工具调用 (Tool Calling)",
+    "answer": "**定义 (Definition)**\n工具调用是模型提出结构化操作请求，由程序校验并执行受控工具，再将结果返回给模型。\n\n**工作机制 (Mechanism)**\n模型不直接取得系统权限。服务端检查工具白名单、参数、对象权限、预算和必要确认，记录执行状态并处理失败。\n\n**使用场景与示例 (Example)**\n只读检索工具可返回指定范围的资料；修改数据的工具需要更严格的权限和操作确认。\n\n**边界与误区 (Limitations)**\n合法工具名称不代表参数或操作已获授权；工具结果中的文本不能升级为系统指令。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "backend"
+    ],
+    "primary_topic": "backend",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#backend",
+    "id": "public-kb-backend-01",
+    "prompt": "输入契约 (Input Contract)",
+    "answer": "**定义 (Definition)**\n输入契约规定接口接受的数据形状、字段含义、约束和错误处理方式。\n\n**工作机制 (Mechanism)**\n请求先完成解析和验证，再鉴权与检查业务状态，最后执行持久化或任务提交；每层失败返回可理解而不泄漏敏感信息的错误。\n\n**使用场景与示例 (Example)**\n上传请求既检查扩展名，也检查实际格式、大小限制和所属对象权限。\n\n**边界与误区 (Limitations)**\n前端验证用于体验，不替代服务端验证。类型检查也不能自动完成对象级授权。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "database"
+    ],
+    "primary_topic": "database",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#database",
+    "id": "public-kb-database-01",
+    "prompt": "事务 (Transaction)",
+    "answer": "**定义 (Definition)**\n事务把一组数据库操作作为一致的提交或回滚单位，避免只完成一部分业务状态变更。\n\n**工作机制 (Mechanism)**\n用约束保护唯一性和关联关系，在适当隔离级别下读写状态；处理并发冲突与失败，不能仅依赖应用先查后写。\n\n**使用场景与示例 (Example)**\n创建任务和写入待发送事件可在同一个数据库事务中完成，避免只记录了任务却丢失投递意图。\n\n**边界与误区 (Limitations)**\n本地数据库事务不会自动包含消息队列、对象存储或远程API；跨系统副作用要单独设计恢复与幂等。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S8",
+    "topics": [
+      "deployment"
+    ],
+    "primary_topic": "deployment",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#deployment",
+    "id": "public-kb-deployment-01",
+    "prompt": "健康检查 (Health Checks)",
+    "answer": "**定义 (Definition)**\n健康检查用不同探测确认进程是否存活，以及服务是否具备接收请求的条件。\n\n**工作机制 (Mechanism)**\n存活检查定位需要恢复的进程状态；就绪检查控制是否接流量。模型加载和依赖初始化期间可以存活但未就绪。\n\n**使用场景与示例 (Example)**\n服务已经监听端口，模型仍在加载时，不应向用户宣称业务接口已准备好。\n\n**边界与误区 (Limitations)**\n把所有暂时依赖故障都作为重启理由可能形成重启风暴；探测本身也要轻量、有超时。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S8",
+    "topics": [
+      "ops"
+    ],
+    "primary_topic": "ops",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#ops",
+    "id": "public-kb-ops-01",
+    "prompt": "最小权限 (Least Privilege)",
+    "answer": "**定义 (Definition)**\n每个身份或组件只获得完成当前任务所必需的权限，降低误操作与攻击影响。\n\n**工作机制 (Mechanism)**\n在请求入口和对象访问点校验身份、资源范围与操作类型；跨组件传递可信授权上下文，并记录必要审计信息。\n\n**使用场景与示例 (Example)**\n检索时先限定用户有权访问的文档，不能全库召回后仅在页面隐藏无权内容。\n\n**边界与误区 (Limitations)**\n模型、上传文档和客户端自报身份都不能替代服务端授权；日志也需要权限和保留策略。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "system_design"
+    ],
+    "primary_topic": "system_design",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#system_design",
+    "id": "public-kb-system_design-01",
+    "prompt": "幂等性 (Idempotency)",
+    "answer": "**定义 (Definition)**\n重复执行同一个业务意图，不应产生额外的业务效果；这不要求每次都完全不做计算。\n\n**工作机制 (Mechanism)**\n定义幂等键的作用范围，保存请求摘要与处理结果，使用唯一约束和事务解决竞争；同键不同输入应明确冲突。\n\n**使用场景与示例 (Example)**\n提交任务成功但响应丢失时，客户端使用相同键重试，服务器返回原任务而不是创建第二个。\n\n**边界与误区 (Limitations)**\n仅用进程内字典不足以处理多进程和重启；不同业务意图不能错误共用同一键。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S3",
+    "topics": [
+      "advanced"
+    ],
+    "primary_topic": "advanced",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#advanced",
+    "id": "public-kb-advanced-01",
+    "prompt": "推理预算 (Inference Budget)",
+    "answer": "**定义 (Definition)**\n推理预算限制单次请求和整体服务可以使用的上下文、输出长度、时间、并发及资源。\n\n**工作机制 (Mechanism)**\n按代表性输入测量排队、首段响应、完成时间、吞吐和内存峰值，再配置限流、排队、长度上限与降级。\n\n**使用场景与示例 (Example)**\n更大的批量可能提高总吞吐，却增加某个请求的等待，因此不能只看每秒生成总量。\n\n**边界与误区 (Limitations)**\n模型权重大小不是完整内存需求；缓存、激活和运行开销也要计入。所有容量数字需要绑定具体配置与输入分布。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "kind": "基础知识",
+    "content_type": "foundation"
+  }
+]

@@ -1,0 +1,422 @@
+[
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "primary_topic": "python",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#python",
+    "id": "public-iq-python-01",
+    "prompt": "生成器为什么可能降低内存占用？",
+    "answer": "**简答**\n它把计算与消费交错进行，不需要预先保存所有输出。仍须检查内部是否缓存数据，以及消费者是否最终又调用 list() 收集全部结果。\n\n**关联机制**\n迭代请求触发函数执行，yield 暂停执行并保存局部状态；下一次迭代从暂停点继续。它通常是单次消费的迭代器。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。节省的是不必保留全部结果的内存；生成器内部仍可能创建大对象。需要随机访问或反复遍历时，列表可能更合适。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "primary_topic": "python",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#python",
+    "id": "public-iq-python-02",
+    "prompt": "可变默认参数有什么风险？",
+    "answer": "**简答**\n函数默认参数对象在函数定义时创建，不会在每次调用时重新创建。使用列表或字典作默认值，可能让多次调用共享修改。可用 None 作哨兵，在函数体内创建新对象。\n\n**关联机制**\n迭代请求触发函数执行，yield 暂停执行并保存局部状态；下一次迭代从暂停点继续。它通常是单次消费的迭代器。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。节省的是不必保留全部结果的内存；生成器内部仍可能创建大对象。需要随机访问或反复遍历时，列表可能更合适。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "algorithm"
+    ],
+    "primary_topic": "algorithm",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#algorithm",
+    "id": "public-iq-algorithm-01",
+    "prompt": "二分查找为什么需要明确区间约定？",
+    "answer": "**简答**\n闭区间和半开区间的边界更新不同。先约定候选范围，再确保每一步保留可能答案且缩小范围；用空输入、单元素、边界值和不存在值检验。\n\n**关联机制**\n先定义输入规模 n，再统计主要操作次数。大 O 给渐近上界，常数和低阶项在渐近分析中通常略去。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。同属 O(n) 的实现实际耗时仍可能差很多。基准测试需要相同输入、环境和测量口径。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "algorithm"
+    ],
+    "primary_topic": "algorithm",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#algorithm",
+    "id": "public-iq-algorithm-02",
+    "prompt": "哈希表查找一定是 O(1) 吗？",
+    "answer": "**简答**\n通常讨论合理哈希与负载下的平均或期望复杂度。碰撞、扩容、键的哈希计算成本和具体实现都会影响实际开销，不能当成绝对常数时间保证。\n\n**关联机制**\n先定义输入规模 n，再统计主要操作次数。大 O 给渐近上界，常数和低阶项在渐近分析中通常略去。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。同属 O(n) 的实现实际耗时仍可能差很多。基准测试需要相同输入、环境和测量口径。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "fundamentals"
+    ],
+    "primary_topic": "fundamentals",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#fundamentals",
+    "id": "public-iq-fundamentals-01",
+    "prompt": "连接超时与读取超时分别解决什么问题？",
+    "answer": "**简答**\n连接超时约束建立连接的等待，读取超时约束读取响应的等待；具体计时行为由客户端库规定。还要设置全链路截止时间，覆盖重试与排队。\n\n**关联机制**\n连接、读取、队列等待和整个请求可以有不同预算。各阶段预算应服从总截止时间，重试不能无限重置总预算。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。客户端超时不证明服务端没有执行成功。重试有副作用的操作需要幂等设计。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S1",
+    "topics": [
+      "fundamentals"
+    ],
+    "primary_topic": "fundamentals",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#fundamentals",
+    "id": "public-iq-fundamentals-02",
+    "prompt": "HTTP 成功状态能证明业务事实正确吗？",
+    "answer": "**简答**\n不能。HTTP 状态表达协议或处理结果，业务正确性还依赖输入、权限、状态约束和结果校验；例如成功返回结构化数据不等于字段受证据支持。\n\n**关联机制**\n连接、读取、队列等待和整个请求可以有不同预算。各阶段预算应服从总截止时间，重试不能无限重置总预算。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。客户端超时不证明服务端没有执行成功。重试有副作用的操作需要幂等设计。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "primary_topic": "ml",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#ml",
+    "id": "public-iq-ml-01",
+    "prompt": "训练表现好但验证表现差，应该先检查什么？",
+    "answer": "**简答**\n先检查集合划分、标签、预处理、训练与评估模式、输入分布和指标实现，再判断过拟合。不要立即归因为模型太小或学习率不对。\n\n**关联机制**\n先按真实应用的数据边界划分集合，再只在训练集拟合预处理与模型；相关实体、近重复样本和时间顺序也要考虑。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。不同文件名不证明样本独立；过度根据测试结果反复选方案，也会削弱最终测试的独立性。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "primary_topic": "ml",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#ml",
+    "id": "public-iq-ml-02",
+    "prompt": "为什么类别不平衡时不能只看准确率？",
+    "answer": "**简答**\n始终预测多数类也可能得到很高准确率。应结合混淆矩阵、各类召回与精确率，以及实际误报和漏报成本，选择阈值和指标。\n\n**关联机制**\n先按真实应用的数据边界划分集合，再只在训练集拟合预处理与模型；相关实体、近重复样本和时间顺序也要考虑。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。不同文件名不证明样本独立；过度根据测试结果反复选方案，也会削弱最终测试的独立性。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S2",
+    "topics": [
+      "transformer"
+    ],
+    "primary_topic": "transformer",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#transformer",
+    "id": "public-iq-transformer-01",
+    "prompt": "Q、K、V 的职责有什么不同？",
+    "answer": "**简答**\nQ 表达当前位置要匹配什么，K 用于被匹配，V 提供最终聚合的信息。它们通常是输入的可学习投影，不是三个互不相关的数据源。\n\n**关联机制**\n输入映射为查询 Q、键 K、值 V；查询与键形成分数，经掩码和归一化后，对值加权求和。因果掩码限制访问未来位置。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。注意力权重不是可靠的因果解释。位置表示、掩码和张量维度错误都可能让模型表面可运行却学习错误关系。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S2",
+    "topics": [
+      "transformer"
+    ],
+    "primary_topic": "transformer",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#transformer",
+    "id": "public-iq-transformer-02",
+    "prompt": "Padding Mask 与因果掩码有什么区别？",
+    "answer": "**简答**\nPadding Mask 排除填充位置的影响；因果掩码限制当前位置读取未来位置。两者用途不同，可以同时使用；实现时核对库的布尔含义和广播维度。\n\n**关联机制**\n输入映射为查询 Q、键 K、值 V；查询与键形成分数，经掩码和归一化后，对值加权求和。因果掩码限制访问未来位置。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。注意力权重不是可靠的因果解释。位置表示、掩码和张量维度错误都可能让模型表面可运行却学习错误关系。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "primary_topic": "llm",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#llm",
+    "id": "public-iq-llm-01",
+    "prompt": "模型返回 JSON 后还需要做什么？",
+    "answer": "**简答**\n校验必填字段、类型、取值范围和多余字段，再核对权限、来源存在性与语义支持。设置明确的失败与复核流程，不把成功解析当成事实已验证。\n\n**关联机制**\n定义契约后生成候选，程序进行解析、类型与取值校验，再检查授权、来源与业务约束。模型结果仍是不可信输入。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。格式正确不是语义正确；自动修复输出时不能默默替模型创造缺失事实。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "primary_topic": "llm",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#llm",
+    "id": "public-iq-llm-02",
+    "prompt": "降低 Temperature 能彻底消除幻觉吗？",
+    "answer": "**简答**\n不能。减少采样随机性不修复知识缺失、歧义输入或错误证据。应限定资料范围、校验关键字段、允许拒答，并用固定样本评估。\n\n**关联机制**\n定义契约后生成候选，程序进行解析、类型与取值校验，再检查授权、来源与业务约束。模型结果仍是不可信输入。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。格式正确不是语义正确；自动修复输出时不能默默替模型创造缺失事实。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S4",
+    "topics": [
+      "rag"
+    ],
+    "primary_topic": "rag",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#rag",
+    "id": "public-iq-rag-01",
+    "prompt": "如何区分检索失败与生成失败？",
+    "answer": "**简答**\n保留授权输入、召回列表、重排结果和最终上下文。先查正确证据是否存在于上下文，再判断是否被截断、误读或错误引用，逐阶段定位。\n\n**关联机制**\n离线解析、切块、建立索引；在线授权过滤、召回、重排、构造上下文、生成与引用检查。资料与索引需要版本管理。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。检索到相关文本不代表它正确、有效或有权访问。缺证据时应说明限制，而非把常识冒充来源事实。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S4",
+    "topics": [
+      "rag"
+    ],
+    "primary_topic": "rag",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#rag",
+    "id": "public-iq-rag-02",
+    "prompt": "切块为什么不是越小越好？",
+    "answer": "**简答**\n过小会拆散必要关系，过大会增加噪声和预算。先按文档结构保留语义单元，再用检索覆盖、引用定位和最终任务质量比较长度与重叠。\n\n**关联机制**\n离线解析、切块、建立索引；在线授权过滤、召回、重排、构造上下文、生成与引用检查。资料与索引需要版本管理。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。检索到相关文本不代表它正确、有效或有权访问。缺证据时应说明限制，而非把常识冒充来源事实。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S7",
+    "topics": [
+      "agent"
+    ],
+    "primary_topic": "agent",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#agent",
+    "id": "public-iq-agent-01",
+    "prompt": "什么时候固定工作流比 Agent 更合适？",
+    "answer": "**简答**\n步骤和审批边界已明确、要求可预测与可审计时，固定流程更容易测试。只有确实需要动态选择行动时再引入 Agent，并限制步数、时间和权限。\n\n**关联机制**\n模型不直接取得系统权限。服务端检查工具白名单、参数、对象权限、预算和必要确认，记录执行状态并处理失败。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。合法工具名称不代表参数或操作已获授权；工具结果中的文本不能升级为系统指令。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S7",
+    "topics": [
+      "agent"
+    ],
+    "primary_topic": "agent",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#agent",
+    "id": "public-iq-agent-02",
+    "prompt": "如何防止 Agent 无限循环？",
+    "answer": "**简答**\n设置步数、费用、时间和重复动作限制，定义成功、失败与人工接管条件；持久化必要状态，工具调用保持幂等，并测试异常路径。\n\n**关联机制**\n模型不直接取得系统权限。服务端检查工具白名单、参数、对象权限、预算和必要确认，记录执行状态并处理失败。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。合法工具名称不代表参数或操作已获授权；工具结果中的文本不能升级为系统指令。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "backend"
+    ],
+    "primary_topic": "backend",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#backend",
+    "id": "public-iq-backend-01",
+    "prompt": "为什么耗时任务不宜全部放在 HTTP 请求里执行？",
+    "answer": "**简答**\n连接可能超时或断开，任务却仍需要完成和恢复。可持久记录任务，返回任务ID，再由后台处理；接收成功不表示任务已完成。\n\n**关联机制**\n请求先完成解析和验证，再鉴权与检查业务状态，最后执行持久化或任务提交；每层失败返回可理解而不泄漏敏感信息的错误。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。前端验证用于体验，不替代服务端验证。类型检查也不能自动完成对象级授权。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "backend"
+    ],
+    "primary_topic": "backend",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#backend",
+    "id": "public-iq-backend-02",
+    "prompt": "async def 能自动解决 CPU 密集型任务吗？",
+    "answer": "**简答**\n不能。协程主要支持等待期间让出执行权；长时间计算或阻塞调用可能占住事件循环。需要按任务性质选择线程、进程或独立工作服务。\n\n**关联机制**\n请求先完成解析和验证，再鉴权与检查业务状态，最后执行持久化或任务提交；每层失败返回可理解而不泄漏敏感信息的错误。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。前端验证用于体验，不替代服务端验证。类型检查也不能自动完成对象级授权。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "database"
+    ],
+    "primary_topic": "database",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#database",
+    "id": "public-iq-database-01",
+    "prompt": "为什么需要数据库唯一约束，而不只是先查询？",
+    "answer": "**简答**\n两个并发请求可能同时查到不存在，再各自插入。唯一约束在存储层处理竞争，应用再按约定解释冲突或返回已有结果。\n\n**关联机制**\n用约束保护唯一性和关联关系，在适当隔离级别下读写状态；处理并发冲突与失败，不能仅依赖应用先查后写。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。本地数据库事务不会自动包含消息队列、对象存储或远程API；跨系统副作用要单独设计恢复与幂等。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "database"
+    ],
+    "primary_topic": "database",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#database",
+    "id": "public-iq-database-02",
+    "prompt": "索引有什么代价？",
+    "answer": "**简答**\n索引提供额外访问路径，但占用空间并增加写入维护成本。是否有效取决于过滤、排序、数据分布和查询计划，不能给所有列都加索引。\n\n**关联机制**\n用约束保护唯一性和关联关系，在适当隔离级别下读写状态；处理并发冲突与失败，不能仅依赖应用先查后写。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。本地数据库事务不会自动包含消息队列、对象存储或远程API；跨系统副作用要单独设计恢复与幂等。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S8",
+    "topics": [
+      "deployment"
+    ],
+    "primary_topic": "deployment",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#deployment",
+    "id": "public-iq-deployment-01",
+    "prompt": "镜像能够保证所有环境完全一致吗？",
+    "answer": "**简答**\n不能。镜像固定一部分软件环境，但硬件、驱动、外部服务、挂载数据和运行配置仍会变化。需要记录并验证完整运行条件。\n\n**关联机制**\n存活检查定位需要恢复的进程状态；就绪检查控制是否接流量。模型加载和依赖初始化期间可以存活但未就绪。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。把所有暂时依赖故障都作为重启理由可能形成重启风暴；探测本身也要轻量、有超时。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S8",
+    "topics": [
+      "deployment"
+    ],
+    "primary_topic": "deployment",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#deployment",
+    "id": "public-iq-deployment-02",
+    "prompt": "回滚模型应用时为什么不只换回代码？",
+    "answer": "**简答**\n模型、模板、Prompt、索引和数据结构可能互相依赖。应回到已验证的兼容组合，并单独评估数据迁移是否可逆。\n\n**关联机制**\n存活检查定位需要恢复的进程状态；就绪检查控制是否接流量。模型加载和依赖初始化期间可以存活但未就绪。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。把所有暂时依赖故障都作为重启理由可能形成重启风暴；探测本身也要轻量、有超时。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S8",
+    "topics": [
+      "ops"
+    ],
+    "primary_topic": "ops",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#ops",
+    "id": "public-iq-ops-01",
+    "prompt": "为什么不能默认记录完整 Prompt？",
+    "answer": "**简答**\n其中可能包含文档正文、用户输入和其他敏感数据。优先记录耗时、版本、安全错误类型和脱敏标识；正文采样需明确权限与留存策略。\n\n**关联机制**\n在请求入口和对象访问点校验身份、资源范围与操作类型；跨组件传递可信授权上下文，并记录必要审计信息。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型、上传文档和客户端自报身份都不能替代服务端授权；日志也需要权限和保留策略。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S8",
+    "topics": [
+      "ops"
+    ],
+    "primary_topic": "ops",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#ops",
+    "id": "public-iq-ops-02",
+    "prompt": "重试与熔断有什么不同？",
+    "answer": "**简答**\n重试尝试恢复暂时性失败；熔断在持续失败时暂时停止调用以保护资源。两者都需要预算与恢复策略，并避免重复副作用和重试风暴。\n\n**关联机制**\n在请求入口和对象访问点校验身份、资源范围与操作类型；跨组件传递可信授权上下文，并记录必要审计信息。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型、上传文档和客户端自报身份都不能替代服务端授权；日志也需要权限和保留策略。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "system_design"
+    ],
+    "primary_topic": "system_design",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#system_design",
+    "id": "public-iq-system_design-01",
+    "prompt": "消息队列为什么仍需要消费端幂等？",
+    "answer": "**简答**\n结果已提交但消息尚未确认时发生故障，可能导致重复投递。消费端应检查已有结果、使用唯一约束并保护状态，避免重复业务效果。\n\n**关联机制**\n定义幂等键的作用范围，保存请求摘要与处理结果，使用唯一约束和事务解决竞争；同键不同输入应明确冲突。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。仅用进程内字典不足以处理多进程和重启；不同业务意图不能错误共用同一键。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S5",
+    "topics": [
+      "system_design"
+    ],
+    "primary_topic": "system_design",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#system_design",
+    "id": "public-iq-system_design-02",
+    "prompt": "Outbox 解决什么，又不解决什么？",
+    "answer": "**简答**\n它在数据库事务内记录业务变化和待投递事件，降低数据库与消息发送之间的丢失风险。仍可能重复发送，也不让对象存储自动加入事务，需要消费端幂等与对账。\n\n**关联机制**\n定义幂等键的作用范围，保存请求摘要与处理结果，使用唯一约束和事务解决竞争；同键不同输入应明确冲突。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。仅用进程内字典不足以处理多进程和重启；不同业务意图不能错误共用同一键。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S3",
+    "topics": [
+      "advanced"
+    ],
+    "primary_topic": "advanced",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#advanced",
+    "id": "public-iq-advanced-01",
+    "prompt": "KV Cache 的价值和代价是什么？",
+    "answer": "**简答**\n它复用自回归生成中历史位置的键和值，减少重复计算，但需要额外内存，随缓存长度、驻留序列和模型结构变化。不能把它理解成已缓存最终答案。\n\n**关联机制**\n按代表性输入测量排队、首段响应、完成时间、吞吐和内存峰值，再配置限流、排队、长度上限与降级。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型权重大小不是完整内存需求；缓存、激活和运行开销也要计入。所有容量数字需要绑定具体配置与输入分布。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  },
+  {
+    "difficulty": "基础",
+    "stage": "S3",
+    "topics": [
+      "advanced"
+    ],
+    "primary_topic": "advanced",
+    "source_name": "公开版独立编写的通用学习示例",
+    "source_ref": "scripts/build_sample_bank.py#advanced",
+    "id": "public-iq-advanced-02",
+    "prompt": "量化后模型一定更快且效果不变吗？",
+    "answer": "**简答**\n不一定。收益依赖硬件、内核、量化方法与负载；质量也可能变化。要在目标任务上同时比较准确性、延迟、吞吐和峰值内存。\n\n**关联机制**\n按代表性输入测量排队、首段响应、完成时间、吞吐和内存峰值，再配置限流、排队、长度上限与降级。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型权重大小不是完整内存需求；缓存、激活和运行开销也要计入。所有容量数字需要绑定具体配置与输入分布。",
+    "kind": "原理与工程题",
+    "content_type": "interview"
+  }
+]
