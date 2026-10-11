@@ -1,6 +1,23 @@
 # Interview Practice · 本地面试答题本
 
-一个中文本地 Web 学习工具，使用 FastAPI、SQLite 和原生 JavaScript。无须模型 API Key，题目和学习记录保存在自己的电脑上。
+一个中文面试学习工具，提供即开即用的静态网页版，以及 FastAPI + SQLite 本地版。无须模型 API Key；网页版记录保存在浏览器，本地版记录保存在自己的电脑上。
+
+## 在线体验
+
+**[点击打开网页版 →](https://leoxfzhou.github.io/interview-practice/)**
+
+网页版不需要下载、安装 Python 或启动服务，使用与本地版相同的 239 条公开题库和答题界面。
+
+| | 网页版（GitHub Pages） | 本地版 |
+| --- | --- | --- |
+| 打开方式 | 点击上方链接 | 双击启动器或启动 Python 服务 |
+| 方向与学习记录 | 当前浏览器的网站存储 | 本机 SQLite |
+| 换设备/浏览器 | 不自动同步 | 由所在电脑的数据库决定 |
+| 清理数据 | 清除网站数据会丢失记录；隐私窗口关闭后通常丢失 | 删除数据库会丢失记录 |
+
+网页版的学习记录不上传服务器，访客之间互不影响；本地版已有进度不会自动迁移到网页版。浏览器需允许 JavaScript 和网站存储。若保存失败，页面会明确提示，不会假装已保存。建议同一时间只在一个标签页练习，以免不同标签显示的进度暂时不一致。下载题库仍需要网络，这不是离线安装应用。
+
+网站由 GitHub 提供静态文件托管，因此访问请求仍会经过 GitHub；“不上传学习记录”不等于托管平台不接收网络访问请求。公开网站只含公开题库，不连接私人版或个人电脑。
 
 ## 功能
 
@@ -115,3 +132,26 @@ python -m unittest discover -s tests -v
 ```
 
 测试使用临时数据库，不修改日常学习记录。前端不依赖构建工具。
+
+浏览器数据层测试（需要 Node.js 22 或更新版本）：
+
+```bash
+node --test tests/browser-store.test.cjs
+```
+
+## 网页版构建与发布
+
+同一份 JSON 题库供本地版和网页版使用；不要手工维护第二份题库。首次已配置 GitHub Pages，通过 `.github/workflows/pages.yml` 在 `main` 更新后自动测试、构建并发布。构建失败不会覆盖已上线版本。
+
+本地预览（使用一个不存在或为空的输出目录）：
+
+```bash
+python scripts/build_pages.py --output dist-preview
+python -m http.server 8080 --bind 127.0.0.1 --directory dist-preview
+```
+
+浏览器打开 `http://127.0.0.1:8080/`。请勿直接双击生成的 HTML：浏览器通常不允许它读取相邻 JSON 文件。重复构建时请指定另一个空目录；构建工具不会递归删除已有目录。
+
+发布工具只打包首页、样式、脚本和经过校验的公开题库，不复制 SQLite、Python 源码、环境变量、测试数据或本地路径。静态资源使用内容哈希文件名，部署更新不会重置浏览器中按稳定题目 ID 保存的评价。不要把私人内容加入这个公开仓库。
+
+如要在自己的 Fork 启用网站，在仓库 Settings → Pages 中选择 GitHub Actions，并运行 Publish interview practice 工作流；README 在线链接需改成自己的地址。发布机制参考 [GitHub Pages 官方文档](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages)。

@@ -93,6 +93,8 @@ const topicInitials = {
 };
 
 async function request(url, options = {}) {
+  // The Pages build installs a browser-local adapter; the Python app stays unchanged.
+  if (window.InterviewStaticConfig) return window.InterviewBrowser.request(url, options);
   const response = await fetch(url, {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) },
     ...options,
@@ -122,7 +124,9 @@ async function initialize() {
     setContentScope(state.contentScope, false);
   } catch (error) {
     showToast(`题库载入失败：${error.message}`);
-    elements.selectionSummary.textContent = "无法连接本地题库，请重新启动应用。";
+    elements.selectionSummary.textContent = window.InterviewStaticConfig
+      ? `无法加载网页版题库：${error.message}。请确认网络正常且浏览器允许保存网站数据，再刷新。`
+      : "无法连接本地题库，请重新启动应用。";
   }
 }
 
@@ -227,7 +231,7 @@ async function persistSelection() {
       method: "PUT",
       body: JSON.stringify({ topics: [...state.selected], content_scope: state.contentScope }),
     });
-    if (sequence === saveSequence) elements.saveStatus.lastChild.textContent = " 已保存到本地";
+    if (sequence === saveSequence) elements.saveStatus.lastChild.textContent = window.InterviewStaticConfig ? " 已保存到此浏览器" : " 已保存到本地";
   } catch (error) {
     if (sequence === saveSequence) elements.saveStatus.lastChild.textContent = " 保存失败";
     showToast(`选择未保存：${error.message}`);

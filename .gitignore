@@ -16,6 +16,8 @@ __pycache__/
 *.key
 *.log
 .DS_Store
+dist/
+dist-preview*/
 data/backups/
 data/verification/
 data/*_manifest.json
