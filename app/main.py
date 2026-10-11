@@ -39,7 +39,7 @@ async def lifespan(_: FastAPI):
 app = FastAPI(
     title="面试答题本",
     description="面向 LLM Application Engineer 的本地面试练习工具",
-    version="1.5.1",
+    version="1.6.0",
     lifespan=lifespan,
 )
 

@@ -112,6 +112,13 @@ TOPICS = [
         "accent": "#7d6758",
     },
     {
+        "slug": "project",
+        "label": "求职表达与通用项目复盘",
+        "description": "项目表达、技术取舍、评测证据和行为问题，不含个人项目材料",
+        "stage": "S9",
+        "accent": "#7d6758",
+    },
+    {
         "slug": "advanced",
         "label": "扩展能力与岗位加试",
         "description": "推理服务、量化、LoRA、微调评测与容量规划",

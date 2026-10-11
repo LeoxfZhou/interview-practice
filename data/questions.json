@@ -1,168 +1,3045 @@
 [
   {
+    "id": "py-001",
+    "prompt": "Python 中可变对象与不可变对象有什么区别？它为什么会影响函数传参？",
+    "answer": "简答：Python 传递的是对象引用。可变对象可以在原对象上修改，不可变对象的所谓修改会创建并绑定到新对象。\n\n要点：\n- list、dict、set 通常可变；int、str、tuple 通常不可变。\n- 函数内对 list 执行 append，调用者能看到变化；给参数重新赋值只改变局部名称绑定。\n- 可变默认参数只创建一次，容易在多次调用间共享状态，应改用 None 后在函数内初始化。\n\n常见追问：浅拷贝只复制外层容器，深拷贝递归复制内部对象，但并非所有资源都适合深拷贝。",
     "difficulty": "基础",
+    "kind": "原理题",
     "stage": "S1",
     "topics": [
       "python"
     ],
-    "primary_topic": "python",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#python",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / py-001",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "py-002",
+    "prompt": "请解释 try、except、else、finally 的执行时机，以及工程中如何划分异常处理边界。",
+    "answer": "简答：try 放可能失败的操作；except 只捕获能够处理的具体异常；else 在没有异常时执行；finally 无论是否异常都用于释放资源。\n\n工程原则：\n- 底层函数保留原始错误上下文，必要时用 raise ... from ... 转换为业务异常。\n- 在能够补偿、重试或转成明确 HTTP 响应的边界处理异常。\n- 不使用裸 except 吞错；日志记录 traceback，但不能记录密钥和敏感数据。\n- 文件、连接优先用上下文管理器 (Context Manager)，避免只依赖 finally。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / py-002",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "py-003",
+    "prompt": "Python 的 GIL、异步 I/O 和多进程分别解决什么问题？",
+    "answer": "适用范围：下面的 GIL 讨论针对默认启用 GIL 的 CPython 构建，不代表所有 Python 实现或自由线程构建。\n\n**面试直接回答**\n\n全局解释器锁（Global Interpreter Lock, GIL）限制同一 CPython 进程中多个线程同时执行 Python 字节码。异步 I/O 通过在等待网络或磁盘时让出执行权提高 I/O 并发；多进程拥有独立解释器，可以利用多核处理 CPU 密集任务，但带来进程通信和内存成本。\n\n**深入解释**\n\n先判断瓶颈属于等待还是计算：大量 API 调用、数据库访问通常优先异步；纯 Python 重计算才考虑多进程。线程仍适合会释放 GIL 的本地库或阻塞 I/O，不能把“有 GIL”误解成“线程完全无用”。\n\n**常见追问**\n\n- 如何证明任务是 I/O 密集而不是 CPU 密集？\n- 多进程传输大对象为什么可能变慢？",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / py-003",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "public-iq-backend-02",
+    "prompt": "FastAPI 中何时使用 `async def`，何时使用普通 `def`？",
+    "answer": "**面试直接回答**\n\n调用异步数据库、HTTP 客户端等可等待 I/O 时使用 `async def`；主要依赖阻塞库时使用普通 `def`，让框架在线程池执行，或先把依赖替换为异步版本。不要在事件循环里直接执行长时间阻塞代码。\n\n**深入解释**\n\n`async def` 不是自动提速开关。它只有在等待点能让出控制权时才提高并发；CPU 密集推理通常需要独立进程、任务队列或模型服务。选择前应画出请求中的阻塞边界。\n\n**常见追问**\n\n- 同步 ORM 放进 `async def` 会怎样？\n- 模型推理为什么不一定适合直接放入 Web 进程？",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / public-iq-backend-02",
+    "content_type": "interview",
+    "primary_topic": "backend"
+  },
+  {
     "id": "public-iq-python-01",
-    "prompt": "生成器为什么可能降低内存占用？",
-    "answer": "**简答**\n它把计算与消费交错进行，不需要预先保存所有输出。仍须检查内部是否缓存数据，以及消费者是否最终又调用 list() 收集全部结果。\n\n**关联机制**\n迭代请求触发函数执行，yield 暂停执行并保存局部状态；下一次迭代从暂停点继续。它通常是单次消费的迭代器。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。节省的是不必保留全部结果的内存；生成器内部仍可能创建大对象。需要随机访问或反复遍历时，列表可能更合适。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
+    "prompt": "生成器 (Generator)与普通列表相比有什么价值？什么时候不应该使用生成器？",
+    "answer": "简答：生成器按需产出元素，可以流式处理数据，降低峰值内存，并能把读取、清洗和转换串成惰性管线。\n\n边界：\n- 生成器通常只能消费一次，不适合需要重复遍历或随机索引的场景。\n- 错误可能延迟到迭代时才出现，调试和资源生命周期要格外清楚。\n- 数据很小且需要多次复用时，列表更直接。\n\n典型应用：逐行处理大型 JSONL，而不是一次 read 全部内容。",
     "difficulty": "基础",
+    "kind": "原理题",
     "stage": "S1",
     "topics": [
       "python"
     ],
-    "primary_topic": "python",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#python",
-    "id": "public-iq-python-02",
-    "prompt": "可变默认参数有什么风险？",
-    "answer": "**简答**\n函数默认参数对象在函数定义时创建，不会在每次调用时重新创建。使用列表或字典作默认值，可能让多次调用共享修改。可用 None 作哨兵，在函数体内创建新对象。\n\n**关联机制**\n迭代请求触发函数执行，yield 暂停执行并保存局部状态；下一次迭代从暂停点继续。它通常是单次消费的迭代器。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。节省的是不必保留全部结果的内存；生成器内部仍可能创建大对象。需要随机访问或反复遍历时，列表可能更合适。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / public-iq-python-01",
+    "content_type": "interview",
+    "primary_topic": "python"
   },
   {
+    "id": "py-006",
+    "prompt": "Mock 外部模型后，如何避免测试与真实 API 脱节？",
+    "answer": "**面试直接回答**\n\n把供应商适配层限制为小而明确的契约，对内部业务使用 Mock；同时通过 Schema 校验、录制的脱敏响应或少量沙箱契约测试验证适配层。Mock 不能随意返回业务希望的格式。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 单元测试验证切块、权限和状态转换等纯逻辑；集成测试验证 API、数据库迁移、约束与事务；外部 LLM/Embedding 使用契约一致的 Mock，另保留少量受控真实联调。\n- 必须覆盖权限越界、重复上传、解析失败、超时、模型不可用和删除后不可检索。",
     "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "python",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / py-006",
+    "content_type": "interview",
+    "primary_topic": "backend"
+  },
+  {
+    "id": "algo-001",
+    "prompt": "为什么分析算法时不能只比较一次运行耗时？大 O 表示什么？",
+    "answer": "简答：单次耗时受机器、解释器、输入分布、缓存和系统负载影响，不能描述规模增长后的趋势。大 O 给出输入规模趋大时的渐近上界，忽略常数与低阶项。\n\n面试表达：先定义 n，再分别说明时间和额外空间复杂度，同时交代最好、平均或最坏情况。工程上复杂度不是全部，还要考虑数据规模、常数、I/O 和可读性。",
+    "difficulty": "基础",
+    "kind": "原理题",
     "stage": "S1",
     "topics": [
       "algorithm"
     ],
-    "primary_topic": "algorithm",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#algorithm",
-    "id": "public-iq-algorithm-01",
-    "prompt": "二分查找为什么需要明确区间约定？",
-    "answer": "**简答**\n闭区间和半开区间的边界更新不同。先约定候选范围，再确保每一步保留可能答案且缩小范围；用空输入、单元素、边界值和不存在值检验。\n\n**关联机制**\n先定义输入规模 n，再统计主要操作次数。大 O 给渐近上界，常数和低阶项在渐近分析中通常略去。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。同属 O(n) 的实现实际耗时仍可能差很多。基准测试需要相同输入、环境和测量口径。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / algo-001",
+    "content_type": "interview",
+    "primary_topic": "algorithm"
   },
   {
-    "difficulty": "基础",
-    "stage": "S1",
-    "topics": [
-      "algorithm"
-    ],
-    "primary_topic": "algorithm",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#algorithm",
     "id": "public-iq-algorithm-02",
-    "prompt": "哈希表查找一定是 O(1) 吗？",
-    "answer": "**简答**\n通常讨论合理哈希与负载下的平均或期望复杂度。碰撞、扩容、键的哈希计算成本和具体实现都会影响实际开销，不能当成绝对常数时间保证。\n\n**关联机制**\n先定义输入规模 n，再统计主要操作次数。大 O 给渐近上界，常数和低阶项在渐近分析中通常略去。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。同属 O(n) 的实现实际耗时仍可能差很多。基准测试需要相同输入、环境和测量口径。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
+    "prompt": "为什么哈希表查找通常说是 O(1)，而不是绝对保证 O(1)？",
+    "answer": "**面试直接回答**\n\n平均情况下哈希函数把键分散到不同槽位，可常数次定位；大量冲突、扩容或恶意输入会增加代价，因此复杂度取决于实现和输入分布。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 时间复杂度（Time Complexity）描述输入规模增长时操作次数的数量级；空间复杂度（Space Complexity）描述额外内存增长量。\n- 哈希表适合平均常数时间查找，栈适合后进先出状态，队列适合先进先出处理，堆适合动态维护最值，图搜索适合关系网络。\n- 面试不仅要给出复杂度，还要解释不变量（Invariant）、边界条件和为什么算法会终止。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom collections import Counter\nfrom typing import Optional\n\ndef first_unique(values: list[str]) -> Optional[str]:\n    counts = Counter(values)\n    return next((value for value in values if counts[value] == 1), None)\n\nprint(first_unique([\"a\", \"b\", \"a\", \"c\"]))  # 输出: b\n```\n该算法遍历输入两次，时间复杂度为 O(n)，哈希计数额外空间复杂度为 O(n)。",
     "difficulty": "基础",
+    "kind": "算法题",
     "stage": "S1",
     "topics": [
-      "fundamentals"
+      "algorithm",
+      "python"
     ],
-    "primary_topic": "fundamentals",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#fundamentals",
-    "id": "public-iq-fundamentals-01",
-    "prompt": "连接超时与读取超时分别解决什么问题？",
-    "answer": "**简答**\n连接超时约束建立连接的等待，读取超时约束读取响应的等待；具体计时行为由客户端库规定。还要设置全链路截止时间，覆盖重试与排队。\n\n**关联机制**\n连接、读取、队列等待和整个请求可以有不同预算。各阶段预算应服从总截止时间，重试不能无限重置总预算。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。客户端超时不证明服务端没有执行成功。重试有副作用的操作需要幂等设计。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / public-iq-algorithm-02",
+    "content_type": "interview",
+    "primary_topic": "algorithm"
   },
   {
+    "id": "public-iq-algorithm-01",
+    "prompt": "二分查找最容易写错的边界是什么？你会怎样稳定地写出来？",
+    "answer": "简答：先明确搜索区间是不变量。闭区间写法用 left <= right，排除 mid 后更新为 mid±1；左闭右开写法用 left < right，右边界可更新为 mid。两套模板不能混用。\n\n进阶：找第一个满足条件的位置时，把问题改写成单调谓词，循环结束后再检查边界和元素是否存在。必须覆盖空数组、单元素、目标在两端和目标不存在。",
     "difficulty": "基础",
+    "kind": "代码题",
     "stage": "S1",
     "topics": [
-      "fundamentals"
+      "algorithm"
     ],
-    "primary_topic": "fundamentals",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#fundamentals",
-    "id": "public-iq-fundamentals-02",
-    "prompt": "HTTP 成功状态能证明业务事实正确吗？",
-    "answer": "**简答**\n不能。HTTP 状态表达协议或处理结果，业务正确性还依赖输入、权限、状态约束和结果校验；例如成功返回结构化数据不等于字段受证据支持。\n\n**关联机制**\n连接、读取、队列等待和整个请求可以有不同预算。各阶段预算应服从总截止时间，重试不能无限重置总预算。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。客户端超时不证明服务端没有执行成功。重试有副作用的操作需要幂等设计。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / public-iq-algorithm-01",
+    "content_type": "interview",
+    "primary_topic": "algorithm"
   },
   {
+    "id": "algo-004",
+    "prompt": "BFS 和 DFS 的适用场景有什么区别？",
+    "answer": "简答：BFS 按层扩展，适合无权图最短步数、层序遍历；DFS 沿路径深入，适合连通性、回溯、拓扑相关遍历和树的递归问题。\n\n复杂度通常都是 O(V+E)，区别主要在访问顺序与空间形态。BFS 队列可能存整层节点，DFS 的递归深度可能栈溢出。图遍历必须维护 visited，标记时机通常应在入队/入栈时，避免重复加入。",
     "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S1",
+    "topics": [
+      "algorithm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / algo-004",
+    "content_type": "interview",
+    "primary_topic": "algorithm"
+  },
+  {
+    "id": "algo-005",
+    "prompt": "如何判断一道题适合使用动态规划？",
+    "answer": "简答：问题通常具有重叠子问题和最优子结构，并且状态转移只依赖可控的较小状态。\n\n答题步骤：\n- 定义 dp 状态的准确含义。\n- 写出状态转移和选择。\n- 确定初始化、遍历顺序和最终答案位置。\n- 分析是否能压缩空间。\n\n如果状态包含过多历史信息或没有稳定的重复子问题，贪心、搜索或其他结构可能更合适。",
+    "difficulty": "进阶",
+    "kind": "解题方法",
+    "stage": "S1",
+    "topics": [
+      "algorithm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / algo-005",
+    "content_type": "interview",
+    "primary_topic": "algorithm"
+  },
+  {
+    "id": "ml-001",
+    "prompt": "为什么通常先 `zero_grad()` 再 `backward()`？",
+    "answer": "**面试直接回答**\n\nPyTorch 默认把新梯度累加到参数的 `.grad`。普通小批次训练希望每个 batch 独立估计梯度，因此更新前要清空旧梯度；只有明确进行梯度累积时才故意延迟清空。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 训练集更新参数；验证集用于选择超参数、阈值和最佳检查点；测试集只用于最终无偏估计，不能反复据此调参。\n- 标准训练步骤是前向传播（Forward Pass）→ 计算损失（Loss）→ 清空旧梯度 → 反向传播（Backward Pass）→ 优化器更新（Optimizer Step）。\n\n**最小代码示例（Minimal Example）**\n```python\nimport torch\nfrom torch import nn\n\nmodel = nn.Linear(2, 1)\noptimizer = torch.optim.SGD(model.parameters(), lr=0.1)\nfeatures = torch.tensor([[1.0, 2.0]])\ntargets = torch.tensor([[1.0]])\n\npredictions = model(features)\nloss = nn.functional.mse_loss(predictions, targets)\noptimizer.zero_grad()  # 梯度默认累积，不清空会把不同 batch 的梯度叠加。\nloss.backward()\noptimizer.step()\nprint(loss.ndim)  # 输出: 0\n```",
+    "difficulty": "基础",
+    "kind": "原理题",
     "stage": "S2",
     "topics": [
       "ml"
     ],
-    "primary_topic": "ml",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-001",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-002",
+    "prompt": "只调用 `model.eval()` 为什么仍可能消耗梯度内存？",
+    "answer": "**面试直接回答**\n\n`eval()` 只改变某些层的运行行为，不关闭自动微分。若输入和参数需要梯度，计算图仍会建立；推理或验证还应使用 `torch.no_grad()` 或适合的推理上下文。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- `model.train()` 和 `model.eval()` 切换模块行为，主要影响 Dropout、BatchNorm 等层；它们不会自动开启或关闭梯度。\n- `torch.no_grad()` 或推理模式控制自动微分记录，减少推理内存和计算开销；验证时通常同时使用 `eval()` 与无梯度上下文。\n\n**最小代码示例（Minimal Example）**\n```python\nimport torch\nfrom torch import nn\n\nmodel = nn.Sequential(nn.Linear(2, 2), nn.Dropout(p=0.5))\nmodel.eval()\nwith torch.no_grad():\n    output = model(torch.ones(1, 2))\nprint(output.requires_grad)  # 输出: False\n```",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-002",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
     "id": "public-iq-ml-01",
-    "prompt": "训练表现好但验证表现差，应该先检查什么？",
-    "answer": "**简答**\n先检查集合划分、标签、预处理、训练与评估模式、输入分布和指标实现，再判断过拟合。不要立即归因为模型太小或学习率不对。\n\n**关联机制**\n先按真实应用的数据边界划分集合，再只在训练集拟合预处理与模型；相关实体、近重复样本和时间顺序也要考虑。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。不同文件名不证明样本独立；过度根据测试结果反复选方案，也会削弱最终测试的独立性。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
+    "prompt": "训练准确率很高、验证准确率很低，第一步查什么？",
+    "answer": "**面试直接回答**\n\n先确认训练与验证计算流程一致且数据划分无泄漏，再比较损失曲线和类别分布。若流程正确，才考虑过拟合，并通过数据增强、正则化、减小模型、早停或增加数据改善。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 随机种子（Random Seed）控制部分随机源，但不同硬件、并行执行和非确定性算子仍可能造成差异，因此“设种子”不等于字节级完全复现。\n- 欠拟合（Underfitting）表现为训练与验证都差；过拟合（Overfitting）表现为训练持续改善而验证恶化；数据泄漏（Data Leakage）让模型在训练时接触本不该看到的验证或测试信息。\n- 类别不平衡需要结合 Precision、Recall、F1、分层划分、加权损失或重采样处理，不能只看 Accuracy。\n\n**最小代码示例（Minimal Example）**\n```python\nimport random\nimport torch\n\nrandom.seed(42)\ntorch.manual_seed(42)\nprint(torch.rand(2).tolist())  # 输出: [0.8822692632675171, 0.9150039553642273]\n```",
     "difficulty": "基础",
+    "kind": "原理题",
     "stage": "S2",
     "topics": [
       "ml"
     ],
-    "primary_topic": "ml",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / public-iq-ml-01",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
     "id": "public-iq-ml-02",
-    "prompt": "为什么类别不平衡时不能只看准确率？",
-    "answer": "**简答**\n始终预测多数类也可能得到很高准确率。应结合混淆矩阵、各类召回与精确率，以及实际误报和漏报成本，选择阈值和指标。\n\n**关联机制**\n先按真实应用的数据边界划分集合，再只在训练集拟合预处理与模型；相关实体、近重复样本和时间顺序也要考虑。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。不同文件名不证明样本独立；过度根据测试结果反复选方案，也会削弱最终测试的独立性。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
+    "prompt": "类别严重不平衡时为什么 Accuracy 可能误导？",
+    "answer": "**面试直接回答**\n\n若负类占 99%，模型永远预测负类也有 99% Accuracy，却完全找不到正类。应结合每类 Precision、Recall、F1、混淆矩阵和业务错误成本选择指标。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 文本分类（Text Classification）为输入分配标签；语言建模（Language Modeling）预测 Token 概率；文本生成（Text Generation）按条件逐步采样后续 Token。\n- Precision 衡量预测为正的样本中多少正确，Recall 衡量真实正样本中多少被找出，F1 是二者调和平均。混淆矩阵展示每类真实标签与预测标签的组合。\n\n**最小代码示例（Minimal Example）**\n```python\ntrue_positive, false_positive, false_negative = 8, 2, 4\nprecision = true_positive / (true_positive + false_positive)\nrecall = true_positive / (true_positive + false_negative)\nf1 = 2 * precision * recall / (precision + recall)\nprint(round(precision, 2))  # 输出: 0.8\nprint(round(recall, 2))     # 输出: 0.67\nprint(round(f1, 2))         # 输出: 0.73\n```",
     "difficulty": "基础",
+    "kind": "原理题",
     "stage": "S2",
     "topics": [
-      "transformer"
+      "transformer",
+      "ml",
+      "llm",
+      "project"
     ],
-    "primary_topic": "transformer",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#transformer",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / public-iq-ml-02",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "ml-005",
+    "prompt": "什么是数据泄漏 (Data Leakage)？请给出两个常见例子。",
+    "answer": "简答：训练阶段使用了真实预测时不可获得的信息，导致离线指标虚高、上线失效。\n\n例子：\n- 在切分训练/验证集之前，用全量数据计算标准化参数或特征选择。\n- 时间序列随机切分，使未来信息进入训练集。\n- 同一用户或重复样本跨越训练与验证集合。\n\n预防：先按时间、主体或业务边界切分，再在训练集拟合预处理管线，并审查每个特征的产生时间。",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-005",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-006",
+    "prompt": "为什么固定随机种子仍不能保证所有深度学习实验完全复现？",
+    "answer": "简答：随机种子只控制部分随机源；GPU 算子可能使用非确定实现，并行 (Parallelism)调度、库版本、驱动、硬件和数据加载顺序也会影响结果。\n\n可复现措施：记录代码与依赖版本、数据版本、配置和模型；为 Python/NumPy/PyTorch/DataLoader 设置种子；启用确定性算法并接受性能损失；重复实验报告均值和波动，而不是把一次结果当作绝对结论。",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-006",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
     "id": "public-iq-transformer-01",
-    "prompt": "Q、K、V 的职责有什么不同？",
-    "answer": "**简答**\nQ 表达当前位置要匹配什么，K 用于被匹配，V 提供最终聚合的信息。它们通常是输入的可学习投影，不是三个互不相关的数据源。\n\n**关联机制**\n输入映射为查询 Q、键 K、值 V；查询与键形成分数，经掩码和归一化后，对值加权求和。因果掩码限制访问未来位置。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。注意力权重不是可靠的因果解释。位置表示、掩码和张量维度错误都可能让模型表面可运行却学习错误关系。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
+    "prompt": "自注意力中的 Q、K、V 各自负责什么，为什么分数要除以 sqrt(d_k)？",
+    "answer": "**面试直接回答**\n\n查询（Query, Q）表示当前位置想找什么，键（Key, K）表示各位置可被怎样匹配，值（Value, V）承载最终汇总的内容。点积随键维度增大会变大，除以 sqrt(d_k) 可控制分数尺度，避免 Softmax 过早饱和、梯度变小。\n\n**深入解释**\n\nQ、K、V 在自注意力中来自同一输入序列，但通常经过不同线性投影，所以并非数值相等。先用 QK^T 计算相关性，经过缩放、掩码和 Softmax 得到权重，再对 V 加权求和。\n\n**常见追问**\n\n- 自注意力中 Q、K、V 为什么不是同一个张量的同值复制？\n- Padding Mask 与 Causal Mask 分别屏蔽什么？",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / public-iq-transformer-01",
+    "content_type": "interview",
+    "primary_topic": "transformer"
   },
   {
-    "difficulty": "基础",
+    "id": "tr-002",
+    "prompt": "Attention 为什么要除以 √dₖ，而不是直接把 QKᵀ 送入 softmax？",
+    "answer": "简答：若 Q、K 各维近似独立且方差为 1，点积方差约为 dₖ，标准差约为 √dₖ。维度增大时点积绝对值会变大，使 softmax 饱和、分布过尖、梯度变小。除以 √dₖ 把尺度拉回稳定范围。\n\n关键点：缩放目标是数值和梯度稳定，不是为了改变张量维度，也不是普通意义上的正则化。",
+    "difficulty": "进阶",
+    "kind": "推导题",
     "stage": "S2",
     "topics": [
       "transformer"
     ],
-    "primary_topic": "transformer",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#transformer",
-    "id": "public-iq-transformer-02",
-    "prompt": "Padding Mask 与因果掩码有什么区别？",
-    "answer": "**简答**\nPadding Mask 排除填充位置的影响；因果掩码限制当前位置读取未来位置。两者用途不同，可以同时使用；实现时核对库的布尔含义和广播维度。\n\n**关联机制**\n输入映射为查询 Q、键 K、值 V；查询与键形成分数，经掩码和归一化后，对值加权求和。因果掩码限制访问未来位置。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。注意力权重不是可靠的因果解释。位置表示、掩码和张量维度错误都可能让模型表面可运行却学习错误关系。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-002",
+    "content_type": "interview",
+    "primary_topic": "transformer"
   },
   {
+    "id": "tr-003",
+    "prompt": "Transformer 为什么使用多头注意力 (Multi-Head Attention)？头越多越好吗？",
+    "answer": "简答：多头把表示投影到多个子空间，让模型可以同时建模不同位置关系和特征模式，再拼接整合，比单头具有更丰富的表示能力。\n\n边界：头数增加并不必然更好。总隐藏维度固定时，每个头维度会变小；头之间可能冗余，还会增加调度、KV Cache 管理和通信开销。头数必须满足 hidden_size 可整除，并通过任务效果与延迟验证。",
     "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-003",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-004",
+    "prompt": "正弦位置编码、RoPE 与 ALiBi 分别怎样表达位置，应该如何选择？",
+    "answer": "**面试直接回答**\n\n正弦位置编码把绝对位置向量加到 Token 表示中；RoPE 按位置旋转 Q、K，使注意力点积自然包含相对位置信息；ALiBi 直接在注意力分数上加入与距离相关的线性偏置。选择要看模型架构、训练长度、推理外推和运行时支持，不能只说某一种“天然支持无限长度”。\n\n**深入解释**\n\n正弦编码没有可训练位置参数，结构直观；RoPE 不直接修改 V，而是在计算相关性前旋转 Q、K，现代 Decoder-only 模型中很常见；ALiBi 不引入显式位置向量，而是按头对远距离注意力施加不同斜率的惩罚。超过训练长度时，分词分布、注意力模式和缩放策略都会影响结果，因此位置方案的数学形式不能单独保证长上下文质量。\n\n**常见追问**\n\n- RoPE 为什么通常作用于 Q 和 K，而不是 V？\n- “支持更长上下文”与“在更长上下文上仍能正确利用信息”有什么区别？",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-004",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-005",
+    "prompt": "为什么 Transformer 中通常使用 LayerNorm 而不是 BatchNorm？",
+    "answer": "简答：LayerNorm 对单个 token/样本的特征维归一化，不依赖 batch 统计，更适合变长序列、小 batch 和自回归推理；训练和推理行为一致。BatchNorm 依赖批次均值方差，序列 padding、批次大小变化和单 token 解码都会使统计不稳定。\n\n补充：现代架构还会讨论 Pre-Norm、Post-Norm 和 RMSNorm，它们影响深层网络的训练稳定性和计算。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "transformer"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-005",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-006",
+    "prompt": "为什么现代通用生成式大模型常采用 Decoder-only，而不是 Encoder–Decoder？",
+    "answer": "**面试直接回答**\n\nDecoder-only 用统一的因果语言模型目标预测下一个 Token，训练数据容易规模化，提示、回答、代码和工具调用都能表示成同一条序列，推理接口也统一。它并非所有 NLP 任务的最优结构；翻译、摘要或低延迟分类仍可能更适合 Encoder–Decoder、Encoder-only 或专用模型。\n\n**深入解释**\n\nEncoder–Decoder 先双向编码源序列，再由 Decoder 通过 Cross-Attention 生成目标序列；Decoder-only 没有独立 Encoder，只在同一序列上使用因果 Mask。规模化预训练时，后者可直接利用大量连续文本，并通过上下文学习适配多种任务。代价是输入也参加自回归上下文计算，专门的理解任务未必具有最佳成本和延迟。\n\n**常见追问**\n\n- Decoder-only 是否包含原始 Transformer Decoder 的 Cross-Attention？\n- BERT、T5 与 GPT 的注意力可见范围分别有什么区别？",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-006",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "public-iq-advanced-01",
+    "prompt": "什么是 KV Cache？它为什么能加速大模型自回归推理？",
+    "answer": "简答：解码第 t 个 token 时，历史 token 的 K/V 不会改变。KV Cache 保存各层历史 K/V，新一步只计算新 token 的投影并与缓存做注意力，避免重复计算整个前缀。\n\n代价：显存随层数、序列长度、batch 和 KV 头数增长。长上下文和高并发 (Concurrency)常受 KV Cache 限制，可用 MQA/GQA、量化、Paged Attention 或限制上下文缓解。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S3 / Optional",
+    "topics": [
+      "advanced",
+      "transformer",
+      "llm",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / public-iq-advanced-01",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "tr-008",
+    "prompt": "BPE、WordPiece 和 Unigram 三种子词 (Subword)算法的核心差异是什么？",
+    "answer": "简答：BPE 从小词表 (Vocabulary)出发反复合并最高频相邻单元；WordPiece 选择能提升语言模型似然的合并；Unigram 从较大候选词表出发，用概率模型逐步删除贡献较低的子词。\n\n共同目标：平衡词表大小、序列长度和 OOV。实际效果还受语料、规范化、特殊 token 和 byte fallback 影响。分词器 (Tokenizer)必须与模型训练时完全一致。",
+    "difficulty": "进阶",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-008",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "llm-001",
+    "prompt": "结构化抽取任务为什么通常使用较低 Temperature？",
+    "answer": "**面试直接回答**\n\n抽取任务强调格式稳定和结论一致，不需要大量创造性候选。较低 Temperature 可减少随机性，但仍必须使用 Schema 校验，因为低温度不能保证 JSON 合法或事实正确。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Temperature 对 logits 缩放：较低值使概率分布更集中，较高值增加多样性，但不能提升事实正确性。\n- Top-p 核采样（Nucleus Sampling）从累计概率达到阈值的最小候选集合中采样；Stop 在匹配指定序列时停止；Seed 只在供应商和执行路径支持时提高可重复性，不保证跨版本完全一致。\n\n**最小代码示例（Minimal Example）**\n```python\ngeneration_config = {\n    \"temperature\": 0.2,\n    \"top_p\": 0.9,\n    \"max_output_tokens\": 300,\n    \"stop\": [\"</answer>\"],\n}\nprint(generation_config[\"temperature\"])  # 输出: 0.2\n```",
+    "difficulty": "基础",
+    "kind": "应用题",
     "stage": "S3",
     "topics": [
       "llm"
     ],
-    "primary_topic": "llm",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#llm",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / llm-001",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
     "id": "public-iq-llm-01",
-    "prompt": "模型返回 JSON 后还需要做什么？",
-    "answer": "**简答**\n校验必填字段、类型、取值范围和多余字段，再核对权限、来源存在性与语义支持。设置明确的失败与复核流程，不把成功解析当成事实已验证。\n\n**关联机制**\n定义契约后生成候选，程序进行解析、类型与取值校验，再检查授权、来源与业务约束。模型结果仍是不可信输入。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。格式正确不是语义正确；自动修复输出时不能默默替模型创造缺失事实。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
+    "prompt": "模型已经按要求返回 JSON，为什么还要 Pydantic？",
+    "answer": "**面试直接回答**\n\n模型可能返回缺字段、错误类型、越界值或额外字段；JSON 语法合法只证明可解析。Pydantic 把外部不可信输出转换成明确的数据契约，失败时可触发修复、重试或拒绝流程。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 稳定 Prompt 应明确任务、输入边界、约束、输出 Schema 和失败行为。Few-shot 示例通过展示输入输出对帮助模型理解标签边界和格式。\n- 结构化输出必须由程序解析并通过 Schema 校验；语法正确不代表业务正确，仍要检查枚举、范围、权限和资源存在性。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom pydantic import BaseModel, Field\n\nclass SearchIntent(BaseModel):\n    query: str = Field(min_length=1, max_length=200)\n    top_k: int = Field(default=5, ge=1, le=20)\n\nintent = SearchIntent.model_validate({\"query\": \"RAG evaluation\", \"top_k\": 3})\nprint(intent.top_k)  # 输出: 3\n```",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / public-iq-llm-01",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "llm-003",
+    "prompt": "所有网络错误都应该重试吗？",
+    "answer": "**面试直接回答**\n\n不应该。连接中断、部分超时或某些 `5xx` 可能是短暂故障；`401` 通常需要修正凭据，`403` 表示权限拒绝，参数校验失败也不会因重试而恢复。重试还必须考虑请求是否幂等，并设置次数、退避和总时间上限。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 超时（Timeout）限制单次等待；有限重试（Bounded Retry）只处理短暂故障；请求间隔和并发上限减少对对方服务的压力。\n- `User-Agent` 用于标识客户端，但不能赋予访问权限。登录、验证码、付费墙和访问控制属于安全边界，不能通过技术手段规避。\n\n**最小代码示例（Minimal Example）**\n```python\nimport requests\n\nresponse = requests.get(\n    \"https://example.com/data.json\",\n    headers={\"User-Agent\": \"learning-client/1.0\"},\n    timeout=(3.0, 10.0),  # 分别限制连接和读取等待时间，避免请求无限挂起。\n)\nresponse.raise_for_status()\n```\n该示例会发起网络请求；成功时不打印内容，`response` 保存状态码、响应头和正文，非成功状态由 `raise_for_status()` 抛出异常。具体状态和内容取决于外部服务。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "fundamentals",
+      "backend",
+      "llm",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "fundamentals / llm-003",
+    "content_type": "interview",
+    "primary_topic": "fundamentals"
+  },
+  {
+    "id": "llm-004",
+    "prompt": "什么是流式输出？SSE 与 WebSocket 应如何选择？",
+    "answer": "简答：流式输出让服务端在完整答案生成前持续发送增量 token，降低首 token 延迟。SSE 基于 HTTP 单向推送，文本流实现简单，适合大多数聊天生成；WebSocket 是全双工连接，适合需要频繁双向实时消息的场景。\n\n工程边界：要处理心跳、代理缓冲、客户端取消、半途异常、背压和断线；流式降低感知延迟，但不会减少模型总计算量。",
+    "difficulty": "进阶",
+    "kind": "系统设计",
+    "stage": "S3 / S5",
+    "topics": [
+      "llm",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / llm-004",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "llm-005",
+    "prompt": "RAG、长上下文、微调与 Prompt Caching 应该如何选择？",
+    "answer": "**面试直接回答**\n\n需要动态私有知识和可引用证据时优先 RAG；资料规模能稳定放入上下文且检索复杂度不高时可用长上下文；要稳定改变行为、格式或任务能力时考虑微调；大量请求复用相同前缀时 Prompt Caching 主要用于降低重复计算。它们解决的问题不同，可以组合，不能只按上下文长度或产品宣传选择。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 检索增强生成（Retrieval-Augmented Generation, RAG）在回答前从外部知识库检索证据，再把证据与问题交给生成模型。典型离线链路为采集 → 解析 → 清洗 → 切块 → Embedding → 建索引；在线链路为查询处理 → 检索 → 重排 → 上下文组装 → 生成 → 引用与校验。\n- RAG 不会把知识写进模型参数。它提升可更新性和可追溯性，但答案质量仍受解析、切块、召回、排序和生成各阶段影响。\n- 长上下文减少检索链路，但输入成本、延迟和位置利用问题会随上下文增长；Prompt Caching 复用相同前缀的计算或计费结果，不会自动提高事实正确性；微调改变参数中的行为分布，却不适合承载频繁变化且必须逐条授权的事实。\n\n**大白话理解（Plain-language Intuition）**\nRAG 像开卷考试：检索系统负责找资料，生成模型负责依据资料组织答案。找错页是检索问题，看到了正确页却答错是生成问题。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / llm-005",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "llm-006",
+    "prompt": "Prompt 写得更严格能否解决幻觉？",
+    "answer": "**面试直接回答**\n\n只能降低部分风险。Prompt 是概率模型的输入，不是硬性权限或事实约束。高风险场景还需要可信数据源、工具结果校验、输出 Schema、业务规则、置信或证据检查和人工审批。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 幻觉（Hallucination）是模型生成流畅但缺乏可靠依据或与事实冲突的内容；知识截止表示训练知识不覆盖较新信息；上下文污染表示错误、恶意或无关输入影响模型判断。\n- 改善方法包括检索可信资料、要求引用、结构化验证、工具调用、拒答策略和人工复核，但不能承诺完全消除幻觉。",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "rag",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / llm-006",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "llm-007",
+    "prompt": "统一多家模型接口最容易犯什么错误？",
+    "answer": "**面试直接回答**\n\n把最低公分母当成所有模型的完整能力，或静默丢弃供应商差异。更好的设计是统一稳定核心契约，同时通过能力声明或供应商扩展字段处理工具调用、结构化输出和 Token 统计差异。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Provider 抽象应统一应用真正依赖的能力，例如普通生成、流式生成、结构化输出、模型标识、Token 统计和错误分类，而不是强行假设所有供应商参数完全相同。\n- 适配层负责把供应商响应转换为内部数据结构，并保留原始请求 ID、模型版本和结束原因，便于追踪。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom dataclasses import dataclass\nfrom typing import Protocol\n\n@dataclass(frozen=True)\nclass ModelResult:\n    text: str\n    input_tokens: int\n    output_tokens: int\n\nclass ModelProvider(Protocol):\n    async def generate(self, messages: list[dict[str, str]]) -> ModelResult: ...\n```\n\n这段代码只定义统一接口和返回值契约，不会自行调用模型，因此没有运行输出。具体 Provider 实现必须返回 `ModelResult`，让上层稳定读取文本与 Token 用量。",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "backend",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / llm-007",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "rag-001",
+    "prompt": "请从文档进入系统开始，讲一遍完整的 RAG 数据流。",
+    "answer": "简答：文档采集与解析 → 清洗和结构保留 → Chunking → Embedding → 写入向量库及元数据 (Metadata)；查询时做查询处理 → 检索候选 → 可选过滤与 Rerank → 组装带来源上下文 → 模型生成 → 引用和校验。\n\n每一步都要可观测：保存文档版本、chunk 来源、检索分数、最终上下文和回答。否则出现错误时无法判断是解析、检索还是生成的问题。",
+    "difficulty": "基础",
+    "kind": "流程题",
+    "stage": "S4",
+    "topics": [
+      "rag",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-001",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "public-iq-rag-02",
+    "prompt": "法规、财报和产品说明书应使用同一 Chunk Size 吗？",
+    "answer": "**面试直接回答**\n\n不应该机械统一。法规适合保留条款和层级，财报需要保留表格与章节语境，说明书需要保留步骤和警告的邻接关系。Chunk Size 应通过文档结构、典型问题和检索评测共同确定。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 固定长度切分实现简单但可能截断语义；递归切分按段落、句子等分隔符逐级拆分；标题切分保留文档结构；语义切分依据嵌入或模型判断主题边界，成本更高。\n- Chunk Size 太小会丢失上下文并增加索引数量，太大会混入无关内容并占用上下文窗口；Overlap 减少边界信息损失，但会造成重复召回和存储增长。\n- Chunk 必须保留与原文位置的稳定关联，并记录切分配置，以便重新索引和实验复现。\n\n**最小代码示例（Minimal Example）**\n```python\ndef sliding_chunks(text: str, size: int, overlap: int) -> list[str]:\n    if not 0 <= overlap < size:\n        raise ValueError(\"overlap 必须满足 0 <= overlap < size\")\n    chunks: list[str] = []\n    start = 0\n    while start < len(text):\n        end = min(start + size, len(text))\n        chunks.append(text[start:end])\n        if end == len(text):  # 最后一个完整片段已经覆盖文本末尾，避免再产生重复尾片段。\n            break\n        start = end - overlap\n    return chunks\n\nprint(sliding_chunks(\"ABCDEFGHIJ\", size=4, overlap=1))  # 输出: ['ABCD', 'DEFG', 'GHIJ']\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / public-iq-rag-02",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-003",
+    "prompt": "稠密检索、BM25 和混合检索 (Hybrid Retrieval)各自适合什么情况？",
+    "answer": "简答：稠密检索擅长语义相近但字面不同的表达；BM25 擅长专有名词、编号、错误码和关键词精确匹配；混合检索融合两者，覆盖面通常更稳。\n\n融合可以用加权归一化分数或 Reciprocal Rank Fusion。不能直接相加未校准的原始分数。是否提升要用相同评测集比较 Recall@K、MRR/nDCG、延迟和最终答案表现。",
+    "difficulty": "进阶",
+    "kind": "对比题",
+    "stage": "S6",
+    "topics": [
+      "rag"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-003",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-004",
+    "prompt": "Embedding 模型选型时应看哪些指标？",
+    "answer": "简答：先看目标语言和领域的检索质量，再看向量维度、最大输入长度、吞吐、延迟、部署方式、许可和成本。公开榜单只能初筛，最终要在自己的查询-文档评测集上验证。\n\n注意：查询和文档必须使用同一兼容模型及归一化策略；更换模型通常需要全量重建向量索引；向量相似度度量要与模型训练方式匹配。",
+    "difficulty": "进阶",
+    "kind": "选型题",
+    "stage": "S4",
+    "topics": [
+      "rag",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-004",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-005",
+    "prompt": "为什么不直接用 Reranker 扫描全部文档？",
+    "answer": "**面试直接回答**\n\n交叉编码式重排通常需要对每个查询—文档对执行较昂贵模型计算，不适合全库扫描。常用两阶段架构先快速召回几十到几百个候选，再重排较小集合。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Metadata Filter 先约束租户、时间、文档类型和版本，再在合法候选中检索。\n- Reranker 对第一阶段召回的较小候选集进行更精细的“查询—文档”相关性评分；它通常提高排序质量，但增加延迟和成本。\n- Query Rewrite 可补全上下文、展开缩写或生成检索表达，但必须保留原始问题，避免改写偏离用户意图。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-005",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "public-iq-rag-01",
+    "prompt": "如何区分“没有检索到”和“检索到了但模型答错”？",
+    "answer": "**面试直接回答**\n\n先独立检查正确证据是否出现在 Top-K 或重排候选中；没有则属于解析、切块、查询或召回问题。正确证据已进入最终上下文但答案错误，则检查上下文组装、Prompt、模型理解、引用绑定和生成校验。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 上下文组装应去除重复片段、保留来源边界、控制 Token 预算，并明确区分指令与不可信文档内容。\n- 引用必须指向真正支持结论的原文，不能只列“检索到的文档”。资料不足时应返回缺少的证据和可继续查询的方向，而不是编造答案。\n\n**最小代码示例（Minimal Example）**\n```python\ndef build_context(chunks: list[dict[str, str]]) -> str:\n    return \"\\n\\n\".join(\n        f\"[来源: {chunk['source']}]\\n{chunk['text']}\" for chunk in chunks\n    )\n\ncontext = build_context([{\"source\": \"manual.md#p12\", \"text\": \"支持 CUDA 设备。\"}])\nprint(context)\n\n# 期望输出:\n# [来源: manual.md#p12]\n# 支持 CUDA 设备。\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / public-iq-rag-01",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-007",
+    "prompt": "如何分别评测 RAG 的检索和生成质量？",
+    "answer": "简答：检索需要带相关文档/片段标注的评测集，可看 Recall@K、Precision@K、MRR、nDCG；生成看答案正确性、忠实度、引用准确率、完整性与拒答能力。\n\n端到端还要看任务成功率、延迟和成本。LLM-as-a-Judge 可提高评测效率，但要校准评审 Prompt、抽样人工复核并防止同模型偏好，不能替代所有人工标注。",
+    "difficulty": "进阶",
+    "kind": "评测题",
+    "stage": "S6",
+    "topics": [
+      "rag",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-007",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-008",
+    "prompt": "文档更新或删除后，怎样保证关系数据库与向量索引一致？",
+    "answer": "简答：关系库保存文档、版本和处理状态，向量索引作为可重建的派生数据。使用稳定 document_id/chunk_id 和版本号，通过幂等任务执行解析、写索引、切换当前版本、清理旧版本。\n\n不要跨两个系统假设原子事务。可用 Outbox/任务表记录待处理事件，失败重试并做对账；查询只读取状态为 ready 的版本。删除先逻辑标记，再异步清理向量。",
+    "difficulty": "进阶",
+    "kind": "系统设计",
+    "stage": "S5 / S6",
+    "topics": [
+      "rag",
+      "backend",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-008",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-009",
+    "prompt": "多租户 RAG 如何防止检索到其他租户的文档？",
+    "answer": "**面试直接回答**\n\n租户隔离必须由可信服务端根据认证身份生成过滤条件，并在检索层和原文读取层都强制执行；不能接受模型或客户端自由传入租户 ID。还要用跨租户负向测试验证零泄漏。\n\n**深入解释**\n\n典型链路是身份认证 → 服务端解析 tenant_id → 检索时强制 metadata/分区过滤 → 返回文档前再次做资源授权。索引构建、缓存键、日志和离线评测集也要携带租户边界，否则隔离可能在旁路中失效。\n\nPre-filter 在向量搜索前先限定候选集合，隔离语义清晰，通常适合权限与租户边界；Post-filter 先取向量候选再过滤，如果候选池过小，可能出现“索引里有合格结果但最终返回不足”的假性低召回。具体数据库的过滤执行计划不同，必须验证过滤发生在哪一步，安全边界不能依赖默认行为猜测。\n\n**常见追问**\n\n- 向量数据库的 metadata filter 是否足够？\n- Pre-filter 与 Post-filter 分别会怎样影响召回和延迟？\n- 共享缓存如何避免跨租户命中？",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm",
+      "backend",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-009",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "be-001",
+    "prompt": "FastAPI 中路径参数、查询参数和请求体是如何判定并校验的？",
+    "answer": "简答：出现在路由路径模板中的参数是路径参数；普通标量且不在路径中通常是查询参数；Pydantic 模型通常来自请求体。类型提示和 Field/Query/Path 约束用于解析、校验并生成 OpenAPI。\n\n校验失败默认返回 422。工程上应定义稳定的请求/响应模型，不直接暴露 ORM 对象，也不要把所有参数都塞入一个无结构 dict。",
+    "difficulty": "基础",
+    "kind": "框架题",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / be-001",
+    "content_type": "interview",
+    "primary_topic": "backend"
+  },
+  {
+    "id": "be-002",
+    "prompt": "为什么不在每个接口里手写认证逻辑？",
+    "answer": "**面试直接回答**\n\n重复代码容易出现某个接口漏校验或行为不一致。依赖注入把认证作为显式接口依赖，便于复用、测试和替换，但资源级权限仍需结合具体对象进行检查。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Router 按业务领域组织路径操作；依赖注入（Dependency Injection）集中处理认证、数据库会话和共享校验；Pydantic 在系统边界验证请求与响应 Schema。\n- 统一错误格式应包含稳定错误码、可读消息和请求 ID；HTTP 状态码表达协议层结果，业务错误码表达领域原因。\n\n**安全边界**\n客户端自行填写的用户 ID 不构成认证。认证依赖应验证受信令牌的签名、有效期及适用范围，并返回已验证身份；业务层再检查对象归属。测试中可以替换依赖为固定身份，但不能把测试替身作为生产认证。缺失输入的默认校验错误与认证失败不是同一条处理路径，应分别测试。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / be-002",
+    "content_type": "interview",
+    "primary_topic": "backend"
+  },
+  {
+    "id": "public-iq-database-02",
+    "prompt": "索引为什么会让写入变慢？",
+    "answer": "**面试直接回答**\n\n新增、更新或删除行时，数据库还要维护相关索引页，产生额外 CPU、I/O、锁与存储开销。索引应围绕高频过滤、排序和连接设计，并用查询计划验证实际效果。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 用户、文档、Chunk、会话和消息应使用稳定 ID 与外键表达关系；唯一约束维护幂等性，索引服务真实查询路径。\n- Schema 迁移（Schema Migration）把数据库结构变化版本化，使开发、测试和生产按同一顺序演进。\n- 文档与 Chunk 的状态更新需要事务或可恢复工作流，避免主记录显示成功但索引只写入一部分。\n\n**最小代码示例（Minimal Example）**\n```sql\nCREATE TABLE documents (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL,\n    source_hash TEXT NOT NULL,\n    status TEXT NOT NULL CHECK (status IN ('pending', 'running', 'succeeded', 'failed')),\n    UNIQUE (user_id, source_hash)\n);\n```\n该 DDL 会修改数据库 Schema，属于数据库副作用。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / public-iq-database-02",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "be-004",
+    "prompt": "为什么加了近似向量索引后，结果可能少于预期？",
+    "answer": "**面试直接回答**\n\n近似索引先扫描有限候选，Metadata 条件可能在候选扫描后过滤掉部分结果。可调整搜索参数、启用适用版本的迭代扫描、优化过滤列索引、分区，或在规模允许时使用精确检索；最终应以 Recall 与延迟实测决定。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- pgvector 把向量与关系数据保存在 PostgreSQL 中，可利用事务、连接和 Metadata Filter。`<->` 表示 L2 距离，`<#>` 表示负内积，`<=>` 表示余弦距离；排序方向和索引操作符必须与度量一致。\n- 默认精确检索提供完整召回；HNSW 与 IVFFlat 是近似索引。HNSW 通常有更好的速度—召回权衡，但构建更慢、内存更多；IVFFlat 需要已有数据训练列表，并通过 lists/probes 权衡速度与召回。\n\n**最小代码示例（Minimal Example）**\n```sql\nCREATE EXTENSION IF NOT EXISTS vector;\nCREATE TABLE chunks (\n    id BIGSERIAL PRIMARY KEY,\n    user_id BIGINT NOT NULL,\n    content TEXT NOT NULL,\n    embedding VECTOR(3) NOT NULL\n);\nCREATE INDEX chunks_embedding_hnsw\nON chunks USING hnsw (embedding vector_cosine_ops);\n\nSELECT id, content, 1 - (embedding <=> '[0.1,0.2,0.3]') AS cosine_similarity\nFROM chunks\nWHERE user_id = 42\nORDER BY embedding <=> '[0.1,0.2,0.3]'\nLIMIT 5;\n```\n该示例会修改并查询数据库；结果依赖表中数据。生产中维度必须与实际 Embedding 模型一致。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend",
+      "rag"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / be-004",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "be-005",
+    "prompt": "Redis 为什么不会自动让系统变快？",
+    "answer": "**面试直接回答**\n\n缓存只有在命中率足够、数据允许短暂陈旧且失效策略正确时才减少下游访问。低命中、序列化开销、网络往返、热 Key 和一致性维护都可能抵消收益。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- String 适合缓存值和计数器，Hash 适合对象字段，List 适合简单序列，Stream 是带 ID 的追加日志并支持消费组。选择数据结构应依据访问模式，而不是把所有内容序列化为一个大字符串。\n- Key 应包含业务域、租户和版本，例如 `rag:session:{user_id}:{session_id}`；TTL 限制缓存陈旧和内存占用，但到期不等于主数据删除。\n\n**最小代码示例（Minimal Example）**\n```python\ndef session_key(user_id: int, session_id: str, version: int = 1) -> str:\n    return f\"rag:v{version}:session:{user_id}:{session_id}\"\n\nprint(session_key(42, \"abc\"))  # 输出: rag:v1:session:42:abc\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / be-005",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "public-iq-backend-01",
+    "prompt": "上传大文件后为什么不应该在 HTTP 请求内完成全部解析和向量化？",
+    "answer": "简答：解析、OCR、切分和 Embedding 可能耗时数分钟，会占用 Web worker、触发网关超时，并难以重试和展示进度。\n\n设计：接口先校验并保存文件/任务记录，返回 202 + task_id；后台 worker 幂等处理各阶段并更新状态；客户端轮询或订阅进度。要限制大小和类型、扫描恶意文件、清理失败产物，并确保重复任务不会生成重复 chunk。",
+    "difficulty": "进阶",
+    "kind": "系统设计",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "rag",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / public-iq-backend-01",
+    "content_type": "interview",
+    "primary_topic": "backend"
+  },
+  {
+    "id": "be-007",
+    "prompt": "什么是幂等？在大模型应用中哪些接口尤其需要幂等设计？",
+    "answer": "简答：同一操作重复执行一次或多次，最终业务状态与执行一次相同。读取天然幂等，但创建任务、扣费、写索引和工具执行需要额外设计。\n\n做法：客户端提供 idempotency key，服务端以用户+业务操作建立唯一约束并缓存结果；后台任务使用稳定文档版本和 upsert；外部副作用记录执行状态。幂等不代表响应字节完全一致，也不能只靠“先查再写”避免并发 (Concurrency)竞态。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S5",
+    "topics": [
+      "system_design",
+      "backend",
+      "agent",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / be-007",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "ag-001",
+    "prompt": "Tool Calling 的完整执行流程是什么？",
+    "answer": "简答：应用把工具名称、描述和参数 schema 提供给模型；模型返回结构化调用意图；服务端验证工具白名单、参数和权限；执行工具；把结果作为 tool message 回传模型；模型再生成答案或下一步调用。\n\n关键点：模型只提出调用建议，真正执行权在服务端。必须设置超时、幂等、审计和结果大小限制，对高风险工具要求人工确认。",
+    "difficulty": "基础",
+    "kind": "流程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / ag-001",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "public-iq-agent-01",
+    "prompt": "什么情况不应该使用 Agent？",
+    "answer": "**面试直接回答**\n\n步骤固定、输入输出明确、需要强事务保证或错误代价高时应优先普通代码或状态机。Agent 会引入非确定性、额外延迟、成本和调试复杂度。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 智能体（Agent）让模型依据当前状态选择下一步动作；工具调用（Tool/Function Calling）让模型生成结构化工具名称与参数，可信代码验证并执行工具，再把结果返回模型。\n- 固定工作流（Deterministic Workflow）由代码预先决定步骤，适合路径稳定、合规严格和失败代价高的任务。Agent 适合步骤无法完全预先列出、需要基于中间结果选择工具的任务。\n\n**大白话理解（Plain-language Intuition）**\n工作流像按清单做事，Agent 像根据现场情况决定下一步。能用清单稳定解决的问题，不必增加一个会自由选择步骤的决策者。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / public-iq-agent-01",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "public-iq-agent-02",
+    "prompt": "如何防止 Agent 无限循环？",
+    "answer": "**面试直接回答**\n\n使用硬性步骤、时间和成本上限；记录工具调用指纹检测重复；要求状态每步产生可验证进展；连续失败后停止并请求人工确认。只在 Prompt 中写“不要循环”不构成可靠控制。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Agent 必须设置最大步骤、总超时、Token/金额预算、单工具并发和重复调用检测。每一步保存输入、工具、参数、结果、延迟和决策理由的安全摘要。\n- 检测到相同工具与参数重复调用，或状态没有推进时，应终止、改变策略或请求人工帮助。\n\n**最小代码示例（Minimal Example）**\n```python\ndef should_stop(step_count: int, total_cost: float, max_steps: int = 8, max_cost: float = 0.50) -> bool:\n    return step_count >= max_steps or total_cost >= max_cost\n\nprint(should_stop(step_count=8, total_cost=0.10))  # 输出: True\nprint(should_stop(step_count=2, total_cost=0.10))  # 输出: False\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / public-iq-agent-02",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "ag-004",
+    "prompt": "聊天记录和 Agent 状态有什么区别？",
+    "answer": "**面试直接回答**\n\n聊天记录是自然语言交互，状态是程序可验证的执行数据，例如任务 ID、步骤数、工具结果和审批状态。只靠聊天文本恢复流程容易产生歧义和重复执行。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 对话历史（Conversation History）记录消息；短期状态（Working State）记录当前任务的中间变量、已调用工具和剩余步骤；长期记忆（Long-term Memory）保存跨会话可复用的信息。\n- 长期记忆写入需要用户范围、来源、有效期、隐私和删除能力。不能把所有对话自动永久保存，也不能把模型总结当作未经验证的事实。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom dataclasses import dataclass, field\n\n@dataclass\nclass AgentState:\n    question: str\n    step_count: int = 0\n    visited_tools: list[str] = field(default_factory=list)\n\nstate = AgentState(\"比较两份报告\")\nstate.visited_tools.append(\"document_search\")\nstate.step_count += 1\nprint(state.step_count)  # 输出: 1\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / ag-004",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "ag-005",
+    "prompt": "如何测试一个包含多个工具的 Agent？",
+    "answer": "简答：把模型决策和工具执行隔离。单元测试每个工具的 schema、权限、正常与失败；用可控 fake model 测试状态转移；用场景集做端到端成功率评测。\n\n必须覆盖：工具超时、无权限、返回脏数据、重复调用、部分完成、用户取消和达到步数上限。指标包括任务成功率、错误工具率、平均步数、延迟、成本和人工接管率。",
+    "difficulty": "进阶",
+    "kind": "测试题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "python",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / ag-005",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "ag-006",
+    "prompt": "Prompt Injection 为什么不能只靠 System Prompt 防御？",
+    "answer": "**面试直接回答**\n\nSystem Prompt 仍是发送给概率模型的文本，不是可信执行边界；用户输入、网页或检索文档可能诱导模型违反文字规则。必须把权限、工具白名单、参数校验、输出校验和高风险人工确认放在模型之外的代码中。\n\n**深入解释**\n\n分层防御包括标记不可信内容、减少授予模型的权限、对工具参数做服务端授权、隔离敏感数据、限制循环与成本、记录审计轨迹，并对高风险动作确认。任何一层失效时，其他层仍应阻止真实副作用。\n\n**常见追问**\n\n- 检索文档中的指令应该如何处理？\n- 如何设计 Prompt Injection 测试集？",
+    "difficulty": "进阶",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend",
+      "agent",
+      "rag"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / ag-006",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "ops-001",
+    "prompt": "为什么 Docker 镜像应采用多阶段构建，并尽量以非 root 用户运行？",
+    "answer": "简答：多阶段构建把编译依赖留在 builder，只把运行产物复制进最终镜像，减少体积和攻击面；非 root 运行限制容器被攻破后的权限。\n\n还应锁定依赖、使用小而明确的基础镜像、设置健康检查、只复制必要文件、扫描漏洞并通过环境变量/Secret 注入密钥。不要把 .env、模型凭据或开发缓存打进镜像层。",
+    "difficulty": "基础",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / ops-001",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "public-iq-ops-01",
+    "prompt": "为什么不能把完整 Prompt 和检索文档默认写入日志？",
+    "answer": "**面试直接回答**\n\n其中可能包含个人信息、商业资料、提示注入内容和密钥，日志又常有更广访问范围和更长保留期。应默认记录长度、哈希、类别和脱敏摘要，只有受控调试场景按授权采样原文。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 日志（Logs）记录离散事件，指标（Metrics）聚合可计算的时间序列，追踪（Traces）展示一次请求跨服务和阶段的因果路径。\n- Request ID/Trace ID 应贯穿 API、检索、数据库、模型和后台任务。基础指标包括请求量、错误率、P50/P95/P99 延迟、检索耗时、候选数量、模型 Token、模型延迟与估算成本。\n\n**大白话理解（Plain-language Intuition）**\n指标告诉你“系统整体哪里不对”，追踪告诉你“这一次请求卡在哪一步”，日志告诉你“那一步具体发生了什么”。三者相互补充。\n\n**最小代码示例（Minimal Example）**\n```python\nimport json\n\nevent = {\n    \"event\": \"llm_call_completed\",\n    \"request_id\": \"req-123\",\n    \"model\": \"provider/model\",\n    \"latency_ms\": 820,\n    \"input_tokens\": 300,\n    \"output_tokens\": 80,\n}\nprint(json.dumps(event, ensure_ascii=False, sort_keys=True))\n\n# 期望输出:\n# {\"event\": \"llm_call_completed\", \"input_tokens\": 300, \"latency_ms\": 820, \"model\": \"provider/model\", \"output_tokens\": 80, \"request_id\": \"req-123\"}\n```",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend",
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / public-iq-ops-01",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "public-iq-ops-02",
+    "prompt": "熔断（Circuit Breaker）和重试有什么区别？",
+    "answer": "**面试直接回答**\n\n重试针对单个请求的短暂故障；熔断器在下游持续失败时临时阻止更多调用，快速失败并给下游恢复时间。错误的重试会放大故障，熔断也需要半开探测和恢复策略。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 每个下游调用需要连接、读取和总时间预算；重试必须有限且只处理适合的短暂故障；并发上限保护数据库、模型与自身资源。\n- 缓存适合重复且允许陈旧的结果，Key 必须包含模型、参数、权限域和知识版本。降级策略可以是返回检索结果、切换明确标记的模型或稍后重试，不能静默伪造完整成功。",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / public-iq-ops-02",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "ops-004",
+    "prompt": "如何降低 LLM 应用成本，同时避免明显降低答案质量？",
+    "answer": "简答：先通过观测定位成本构成，再优化。\n\n手段：按任务路由不同模型；压缩系统 Prompt 和检索上下文；减少重复 chunk；缓存稳定结果或 embedding；限制输出长度；批量 Embedding；对简单分类使用小模型/规则；提前终止无效 Agent。\n\n每项优化都应同时比较质量、P95 延迟和单请求成本，不能只看 token 数。缓存 key 必须包含权限和版本信息。",
+    "difficulty": "进阶",
+    "kind": "场景题",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "llm",
+      "rag"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / ops-004",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "public-iq-deployment-02",
+    "prompt": "什么是灰度发布和回滚？LLM 应用发布时除了代码版本还要管什么？",
+    "answer": "简答：灰度发布先让少量流量使用新版本，观察指标后逐步扩大；回滚是在异常时恢复上一稳定组合。\n\nLLM 应用的版本单元不仅有代码，还包括模型、Prompt、工具 schema、Embedding 模型、索引、Reranker 和配置。应记录组合版本并保持兼容，使用固定评测集和线上业务指标设门槛。Embedding 变更通常需要并行 (Parallelism)新索引，而不是直接覆盖旧索引。",
+    "difficulty": "进阶",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / public-iq-deployment-02",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "ops-006",
+    "prompt": "线上 RAG 延迟突然升高，你会如何定位？",
+    "answer": "简答：先确认影响范围和起始时间，再按 Trace 拆分解析、Embedding、数据库、Rerank、模型首 token 与生成耗时，比较 P50/P95/P99 和发布/流量变化。\n\n检查：连接池耗尽、慢查询与索引计划、向量候选数、模型供应商限流 (Rate Limiting)、上下文长度增长、队列堆积、缓存命中下降。先限流/降级 (Degradation)止血，再依据证据修复；不能仅凭总接口耗时猜模型慢。",
+    "difficulty": "进阶",
+    "kind": "故障排查",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "rag",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / ops-006",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "pr-001",
+    "prompt": "为什么要准备不同时长版本？",
+    "answer": "**面试直接回答**\n\n不同面试环节可用时间和关注点不同。短版验证问题价值与结果，长版展示系统理解和工程深度；核心事实必须一致，不能在长版才暴露关键限制。\n\n**深入解释**\n\n**30 秒版本（30-second Pitch）**\n按“用户问题—核心方案—量化结果”表达：\n表达模板（不是个人经历）：面向【目标用户】解决【具体问题】，本人负责【可证明的职责】，采用【核心方案】，通过【评测方法】得到【实际结果与限制】。没有测量的数据不要填入模板；团队成果与个人贡献要分开说明。\n\n**3 分钟版本（3-minute Explanation）**\n1. 业务问题、用户和约束。\n2. 数据从上传到引用答案的完整流程。\n3. 三个关键选择及替代方案。\n4. 指标、失败案例和改进证据。\n5. 当前限制与下一步。\n\n**10～15 分钟版本（Deep Dive）**\n按数据、检索、生成、后端、可靠性、安全、评测和部署展开；每一层都准备一项失败案例及修复过程。",
+    "difficulty": "基础",
+    "kind": "项目表达",
+    "stage": "S9",
+    "topics": [
+      "project",
+      "rag"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "project / pr-001",
+    "content_type": "interview",
+    "primary_topic": "project"
+  },
+  {
+    "id": "pr-002",
+    "prompt": "为什么不应该只回答“因为它流行”？",
+    "answer": "**面试直接回答**\n\n流行度不说明它满足当前约束。好的选型回答必须把需求、可选方案、证据和代价连起来，并说明在什么条件变化后会重新选型。\n\n**深入解释**\n\n**回答结构（Answer Structure）**\n1. 明确约束：数据量、请求量、延迟、成本、隐私和团队经验。\n2. 给出候选：例如 FAISS、pgvector 或独立向量数据库。\n3. 说明选择：当前规模需要事务与 Metadata Filter，因此选择 pgvector。\n4. 承认代价：大规模专用检索能力、扩缩容和运维方案仍需进一步评估。",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / pr-002",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "pr-003",
+    "prompt": "如果项目没有可靠性能数据，面试时应该怎样回答？",
+    "answer": "**面试直接回答**\n\n明确说明当前没有可证明的数字，不编造指标；随后给出已经验证的功能证据、现有限制，以及如果继续评测会固定哪些环境、数据集和指标。诚实的证据边界比虚假的精确数字更可信。\n\n**深入解释**\n\n可以区分“事实”“观察”和“计划”：事实来自日志、测试或报告；观察是有限样本中的现象；计划说明未来如何测量。任何百分比都应能回答基线、样本量、环境、统计口径和复现实验。\n\n**常见追问**\n\n- 如何把一次性手工测试升级为可重复基准？\n- 面试官追问“那你做了什么优化”时如何避免夸大？",
+    "difficulty": "进阶",
+    "kind": "项目表达",
+    "stage": "S9",
+    "topics": [
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "project / pr-003",
+    "content_type": "interview",
+    "primary_topic": "project"
+  },
+  {
+    "id": "pr-004",
+    "prompt": "如何回答“项目中最难的问题是什么”？",
+    "answer": "推荐用技术 STAR：\n- Situation：问题在什么环境出现，对用户/指标有什么影响。\n- Task：你负责的边界和目标。\n- Action：如何收集证据、提出假设、设计对照实验、实现修复。\n- Result：量化结果、回归验证和监控。\n- Reflection：根因、方案代价、如果重做会怎样。\n\n选择真正需要判断的问题，不要只说安装依赖失败；重点让面试官看到你的定位方法和取舍。",
+    "difficulty": "基础",
+    "kind": "表达题",
+    "stage": "S9",
+    "topics": [
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "project / pr-004",
+    "content_type": "interview",
+    "primary_topic": "project"
+  },
+  {
+    "id": "pr-005",
+    "prompt": "Recall 从 0.60 到 0.72，应该如何描述？",
+    "answer": "**面试直接回答**\n\n提高了 0.12，即 12 个百分点；相对基线提高 20%。简历中应明确使用哪一种，并说明评测集与 K 值。\n\n**深入解释**\n\n**概念与原则（Concept and Principles）**\n- 所有简历数字必须能说明分母、数据集、基线、测量环境和统计方法。\n- “提高 30%”必须说明是相对提升还是绝对百分点；“高并发”“工业级”“高精度”需要容量、部署和指标证据。\n- 只展示最好一次结果属于选择偏差，应报告稳定运行或重复实验情况。\n\n**最小计算示例（Minimal Example）**\n```python\nbaseline, improved = 0.60, 0.72\nabsolute_points = (improved - baseline) * 100\nrelative_improvement = (improved - baseline) / baseline * 100\nprint(round(absolute_points, 1))       # 输出: 12.0\nprint(round(relative_improvement, 1)) # 输出: 20.0\n```",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend",
+      "rag",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / pr-005",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "pr-006",
+    "prompt": "讲失败案例时为什么不能只说“调了参数就好了”？",
+    "answer": "**面试直接回答**\n\n这无法证明理解根因，也不能复现。应说明排除了哪些可能性、哪个证据定位到哪一层、改变了什么变量，以及修复前后指标和回归测试。\n\n**深入解释**\n\n**回答结构（Answer Structure）**\n- **现象（Symptom）**：用户看到什么、哪个指标变化。\n- **定位（Diagnosis）**：如何通过日志、追踪、候选结果和最小复现缩小范围。\n- **根因（Root Cause）**：具体的数据、状态、配置或契约问题。\n- **修复（Fix）**：改了什么，为什么有效。\n- **验证（Verification）**：哪些测试与指标证明修复没有引入回归。",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / pr-006",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "nlp-001",
+    "prompt": "One-hot 表示和稠密分布式词向量有什么区别？",
+    "answer": "简答：One-hot 用词表 (Vocabulary)大小的稀疏向量标识词，不表达词义相似性；分布式表示把词映射到低维稠密空间，语义或用法相似的词通常更接近。\n\n要点：\n- One-hot 维度高、两两正交，未登录词不好处理。\n- 词向量可用余弦相似度 (Cosine Similarity)比较，但维度本身通常没有独立可解释含义。\n- 静态词向量仍然是一词一向量，不能自然解决一词多义。\n\n常见追问：Embedding 存的是数值表示，不是可以还原原文的压缩文件。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-001",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-002",
+    "prompt": "静态词向量和上下文词表示 (Contextual Representation)有什么区别？",
+    "answer": "简答：Word2Vec、GloVe 等静态方法为同一词分配固定向量；ELMo、BERT 等上下文模型会根据整句话为当前 Token 生成不同表示。\n\n要点：\n- 静态向量计算便宜、易缓存，适合资源有限或简单任务。\n- 上下文表示能处理多义词，但需要更多计算，还要明确取哪一层、哪种 Pooling。\n\n常见追问：不能把未经任务验证的 BERT CLS 向量直接当成最佳句向量。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "transformer"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-002",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-003",
+    "prompt": "Word2Vec 中 CBOW 和 Skip-gram 的训练目标有什么不同？",
+    "answer": "简答：CBOW 用周围上下文预测中心词；Skip-gram 用中心词预测周围上下文词。\n\n要点：\n- CBOW 通常训练更快，对高频词较稳定。\n- Skip-gram 一个中心词产生多个训练对，对低频词和小数据集往往更有利，但计算更多。\n- 两者通常都配合负采样或层次 Softmax 避免每次遍历整个词表 (Vocabulary)。\n\n常见追问：窗口大小影响“相似”的含义，小窗口偏局部语法，大窗口更偏主题关联。",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-003",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-004",
+    "prompt": "Word2Vec 为什么需要负采样？它优化了什么？",
+    "answer": "简答：负采样 (Negative Sampling) 把真实词与上下文配对作为正样本，从噪声分布抽取少量词作为负样本，使用二分类目标训练词向量。\n\n关键要点：\n- 每次只更新正样本和少数负样本相关参数，避免全词表归一化的成本。\n- 它不是精确计算完整 Softmax 概率，也不是与完整 Softmax 完全相同的目标。\n- 负样本分布与数量会影响计算成本和向量质量。\n\n常见追问：分层 Softmax 用树结构计算概率；两者都能降低训练成本，但目标与实现不同。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-004",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-005",
+    "prompt": "Word2Vec 和 GloVe 学习词向量的思路有什么不同？",
+    "answer": "简答：Word2Vec 通过局部上下文预测任务学习向量；GloVe 显式统计全局词-上下文共现矩阵，再拟合共现比率的对数关系。\n\n要点：\n- Word2Vec 更像在局部窗口上做预测，可流式训练。\n- GloVe 利用整个语料的统计信息，需要先构建或统计共现。\n- 两者最终都是静态词向量，不要把训练目标差异误说成“一个有监督、一个无监督”。\n\n常见追问：选型要看现有预训练资源、领域语料和下游任务，而不是只比较算法名称。",
+    "difficulty": "进阶",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-005",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-006",
+    "prompt": "TF-IDF 和语义 Embedding 在文本表示上各有什么优势？",
+    "answer": "简答：TF-IDF 根据词在当前文档与全局文档集中的频率赋权，擅长精确关键词；Embedding 用稠密向量表达语义，更容易召回措辞不同但意思相近的内容。\n\n要点：\n- TF-IDF 可解释、快、对专有名词有效，但忽略词序和深层语义。\n- Embedding 语义泛化强，但可能把关键字面约束模糊化。\n- RAG 中常把 BM25/TF-IDF 类稀疏检索与向量检索 (Vector Retrieval)结合。\n\n常见追问：余弦相似度 (Cosine Similarity)关注方向，欧氏距离受向量尺度影响，使用前要确认模型的归一化约定。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S2 / S6",
+    "topics": [
+      "ml",
+      "rag"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-006",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-007",
+    "prompt": "字级、词级和子词 (Subword) Tokenization 分别有什么取舍？",
+    "answer": "简答：字级词表 (Vocabulary)小、几乎无 OOV，但序列长；词级语义单位直观，但词表大且新词多；子词在词表大小、序列长度和未登录词之间折中，因此成为主流 LLM 方案。\n\n要点：\n- 中文字不等于模型 Token，英文词也可能被切成多个 Token。\n- 子词能组合处理稀有词，但不同模型对同一文本的 Token 数可能不同。\n\n常见追问：Token 成本、上下文长度和截断 (Truncation)策略都必须用实际 Tokenizer 测量，不能按字符数猜测。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S2 / S3",
+    "topics": [
+      "ml",
+      "transformer",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-007",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-008",
+    "prompt": "为什么在现代 Transformer/LLM 任务中不能无条件删除停用词和标点？",
+    "answer": "简答：停用词和标点可能承载否定、时态、句法边界、语气和格式信息。预训练模型也是在包含这些 Token 的分布上学到的，任意删除会造成输入分布偏移。\n\n要点：\n- 传统词袋模型为降维可能删停用词，但也要保留任务相关否定词。\n- Transformer 通常应遵循它的 Tokenizer 和预训练格式，只做有证据的清洗。\n\n常见追问：清洗应通过对照实验验证，并保存原文与处理版本便于回溯。",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S2 / S4",
+    "topics": [
+      "ml",
+      "rag"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-008",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-009",
+    "prompt": "构建用于训练或评测的文本语料库时，如何保证质量？",
+    "answer": "简答：先定义目标人群、任务和语域，再从代表性、平衡性、去重、标注一致性、元数据 (Metadata)和数据泄漏 (Data Leakage)几方面控制。\n\n要点：\n- 保留来源、时间、授权 (Authorization)、语种、领域和版本等 Metadata。\n- 先按用户、文档、时间等业务边界切分，再拟合清洗和特征处理，避免近重样本跨集。\n- 人工标注要有指南、一致性抽查和争议仲裁。\n\n常见追问：数据量不能替代代表性，污染的测试集会让高指标失去意义。",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S2 / S6",
+    "topics": [
+      "ml",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-009",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-010",
+    "prompt": "BIO/BIOES 序列标注是什么？为什么 NER 模型后面有时会接 CRF？",
+    "answer": "简答：BIO 用 B 表示实体开始、I 表示实体内部、O 表示非实体；BIOES 再区分单字实体 S 和结尾 E。CRF 在整条标签序列上联合打分，可学习标签转移约束。\n\n要点：\n- 独立 Token 分类可能产生 I-PER 直接跟在 B-ORG 后面等不合法路径。\n- CRF 通过全局归一化和动态规划找整体最优序列，但不能弥补输入表示严重不足。\n\n常见追问：现代 Encoder 较强时 CRF 的增益不一定大，应用验证集和错误类型决定。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-010",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-011",
+    "prompt": "HMM、MEMM 和线性链 CRF 在序列标注中的核心区别是什么？",
+    "answer": "简答：HMM 是对观测与标签联合分布建模的生成式模型，独立假设较强；MEMM 直接建模局部条件概率，能用灵活特征，但局部归一化容易标注偏置；CRF 对整条标签序列全局归一化。\n\n要点：\n- MEMM 倾向于选择后续分支较少的状态，即 Label Bias。\n- CRF 训练和解码成本更高，通常用 Viterbi 找最优路径。\n\n常见追问：实际选型还要与 Transformer Token 切分对齐，不然标签边界会出错。",
+    "difficulty": "进阶",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-011",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-012",
+    "prompt": "NLU 和 NLG 分别解决什么问题？一个问答系统中它们如何衔接？",
+    "answer": "简答：NLU 把自然语言输入转成系统可用的意图、实体、语义表示或检索查询；NLG 把结构化结果、检索证据或模型状态组织成人可读的语言。\n\n要点：\n- 问答中先理解用户问题与上下文，再检索或调工具，最后生成带约束的回答。\n- 现代 LLM 可在同一模型中完成多个环节，但工程上仍应把权限、工具执行和输出校验分层。\n\n常见追问：不要把“模型生成了结构”等同于业务系统已验证真实性。",
+    "difficulty": "基础",
+    "kind": "架构题",
+    "stage": "S2 / S3",
+    "topics": [
+      "ml",
+      "llm",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-012",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "nlp-013",
+    "prompt": "Stemming 和 Lemmatization 有什么区别？它们是不是所有 NLP 系统的必要步骤？",
+    "answer": "简答：Stemming 通常按规则截去词缀，结果可能不是真实词；Lemmatization 结合词法知识还原词元，更准确但更慢。它们都不是所有任务的必须步骤。\n\n要点：\n- 在词袋、关键词匹配中它们可减少形态变体。\n- 在预训练 Transformer 中常保留原始词形，交给配套 Tokenizer 处理。\n\n常见追问：预处理要与模型预训练约定和业务评测一致，不能因为是传统流程就默认使用。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / nlp-013",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-007",
+    "prompt": "RNN 为什么容易出现梯度消失 (Vanishing Gradient)或梯度爆炸？",
+    "answer": "简答：RNN 在时间上反向传播 (Backpropagation)时，梯度会连续乘上各时刻的 Jacobian。连续 Jacobian 的乘积可能使梯度范数快速缩小或放大，具体取决于权重、激活导数和传播方向；不能只根据每一步矩阵的谱半径作一般性判断。\n\n要点：\n- 消失使模型难学长期依赖，爆炸会造成数值不稳定。\n- LSTM/GRU 的门控与加性记忆路径可缓解长程传播问题；梯度裁剪主要处理爆炸。\n\n常见追问：梯度裁剪不会自动解决梯度消失，也不替代对数据和学习率的检查。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-007",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-008",
+    "prompt": "LSTM 的遗忘门、输入门和输出门分别起什么作用？",
+    "answer": "简答：遗忘门决定旧细胞状态保留多少；输入门决定新候选信息写入多少；输出门决定当前细胞状态有多少暴露为隐状态。\n\n要点：\n- 门通常用 Sigmoid 产生 0到1 之间的逐元素比例。\n- 细胞状态中的加性更新为梯度提供了较直接的长程路径。\n\n常见追问：LSTM 只是缓解而不是彻底消除长序列问题，且时间步之间仍难以充分并行 (Parallelism)。",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-008",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-009",
+    "prompt": "多分类和多标签分类中，Softmax 与 Sigmoid 应该如何选择？",
+    "answer": "简答：互斥多分类用 Softmax，各类别概率共同归一化为 1；多标签分类对每个标签独立用 Sigmoid，一个样本可同时拥有多个标签。\n\n要点：\n- Softmax 通常搭配多类交叉熵，Sigmoid 多标签搭配 Binary Cross Entropy。\n- 训练时应直接使用接受 Logits 的稳定损失实现，不要先手工求概率再取 log。\n\n常见追问：多标签推理阈值可按标签分别校准，不必统一用 0.5。",
+    "difficulty": "基础",
+    "kind": "场景题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-009",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-010",
+    "prompt": "分类任务为什么通常使用交叉熵而不是均方误差？",
+    "answer": "简答：交叉熵直接对正确类别的对数似然进行优化，与 Bernoulli/类别分布的概率建模匹配；MSE 更自然地对应高斯噪声回归。\n\n要点：\n- Softmax+Cross Entropy 对明显错分且自信的样本给出强梯度信号。\n- MSE 不是数学上不能做分类，而是通常优化和概率解释不如交叉熵合适。\n\n常见追问：类别不平衡 (Class Imbalance)时可使用类别权重、Focal Loss 或采样策略，但必须同时看业务阈值和分类别指标。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-010",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-011",
+    "prompt": "AUC 的概率含义是什么？它与 F1 的使用场景有何不同？",
+    "answer": "简答：ROC-AUC 可理解为随机抽一个正样本和一个负样本，模型给正样本更高分数的概率；F1 是某个分类阈值下 Precision 和 Recall 的调和平均。\n\n要点：\n- AUC 评估整体排序能力，不直接给出上线阈值。\n- F1 依赖阈值和正类定义，适合关心当前决策点的场景。\n- 极度类别不平衡 (Class Imbalance)时还应看 PR-AUC、分类别指标和实际错误成本。\n\n常见追问：高 AUC 不代表概率已校准，也不代表所选阈值符合业务目标。",
+    "difficulty": "进阶",
+    "kind": "评测题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-011",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-012",
+    "prompt": "Batch Size 和学习率之间有什么关系？增大 Batch 一定更好吗？",
+    "answer": "简答：大 Batch 的梯度估计方差更小、硬件吞吐可能更高，但每个 Epoch 更新次数更少、显存占用更大，泛化也未必更好。增大 Batch 时通常需重新调学习率与 Warmup。\n\n要点：\n- 线性缩放学习率是经验起点，不是定律。\n- 显存不足可用梯度累积 (Gradient Accumulation)模拟大有效 Batch，但不会完全复制多卡并行 (Parallelism)的时延和归一化行为。\n\n常见追问：比较实验时要对齐总 Token 数、优化器更新次数和学习率调度。",
+    "difficulty": "进阶",
+    "kind": "调参题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-012",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-013",
+    "prompt": "梯度裁剪是什么？应在训练流程的哪一步执行？",
+    "answer": "简答：梯度裁剪在梯度过大时缩放或截断 (Truncation)梯度，防止单次更新导致参数爆炸。通常在 backward 产生梯度之后、optimizer.step 之前执行。\n\n要点：\n- 常用全局范数裁剪，保留各参数梯度的相对方向。\n- 混合精度训练时应先 unscale 梯度再裁剪。\n- 频繁触发裁剪可能表示学习率、数据、损失或模型存在问题。\n\n常见追问：应记录裁剪前范数和触发比例，不要用裁剪掩盖 NaN 根因。",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-013",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "ml-014",
+    "prompt": "语言模型的 Perplexity 是什么？为什么不能跨 Tokenizer 直接比较？",
+    "answer": "简答：Perplexity 是平均 Token 负对数似然的指数，可理解为模型每步面临的有效不确定性，同一数据、同一 Tokenization 下通常越低越好。\n\n要点：\n- 它与 Cross Entropy 单调对应，不等于生成文本的事实正确性或人类偏好。\n- 不同 Tokenizer 把同一文本分成不同数量和粒度的 Token，单 Token 平均损失的度量单位变了。\n\n常见追问：下游任务还应使用任务指标、人工评测和 Bad Case，不能只看 Perplexity。",
+    "difficulty": "进阶",
+    "kind": "评测题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / ml-014",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "tr-009",
+    "prompt": "BERT 的输入表示由哪几部分组成？[CLS] 和 [SEP] 有什么用？",
+    "answer": "简答：BERT 的每个位置通常是 Token Embedding、Position Embedding 和 Token Type/Segment Embedding 之和，再送入 Transformer Encoder。\n\n要点：\n- [CLS] 放在序列开头，其最终隐状态常用于分类头，但不天然是最佳通用句向量。\n- [SEP] 用来标记句子或片段边界；Token Type ID 可区分句对的 A/B 段。\n- Attention Mask 不是 Embedding 的第四项，它用于让注意力忽略 Padding 位置。\n\n常见追问：不同 BERT 变体的特殊 Token 和 Token Type 支持可能不同，应以配套 Tokenizer/Config 为准。",
+    "difficulty": "基础",
+    "kind": "结构题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-009",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-010",
+    "prompt": "BERT 的 Masked Language Modeling 为什么常用 80% [MASK]、10% 随机词、10% 原词的处理？",
+    "answer": "简答：预训练会选择一部分 Token 作为预测目标；若全部换成 [MASK]，微调/推理时从不出现 [MASK] 会形成明显的训练-使用不匹配。\n\n要点：\n- 80% 用 [MASK] 明确提供恢复任务。\n- 10% 随机替换迫使模型不能盲信当前 Token。\n- 10% 保持原词，让模型也学会表示未破坏输入。\n\n常见追问：损失只在被选中的预测位置上计算，不是对所有 Token 都做分类损失。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-010",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-011",
+    "prompt": "BERT 的 NSP 预训练任务是什么？为什么后来有模型删除或替换它？",
+    "answer": "简答：NSP 判断第二个片段是否真正紧接第一个片段，目标是学习句间关系。但随机抽取负例往往话题差异很大，模型可能靠主题而非连贯性完成任务。\n\n要点：\n- RoBERTa 的实验表明在其训练设置中去掉 NSP 也可得到强结果。\n- SOP 用同一文档的连续片段与交换顺序的片段作对比，更聚焦话语顺序。\n\n常见追问：不能把某个预训练任务的结论脱离数据、训练时长和下游任务比较。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-011",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-012",
+    "prompt": "ELMo、BERT 和 GPT 获取上下文表示的方式有什么核心区别？",
+    "answer": "简答：ELMo 用独立的左到右和右到左 LSTM 建模后组合表示；BERT 用 Encoder 和 MLM 在每一层同时利用左右上下文；GPT 类 Decoder-only 模型使用因果 Mask 做下一 Token 预测。\n\n要点：\n- ELMo 的双向是两个单向模型的组合，BERT 是深层双向交互。\n- BERT 更擅长理解/表征任务，GPT 的自回归目标天然适合开放生成。\n\n常见追问：模型家族的适用性还取决于规模、数据、微调方式和推理约束，不只是架构名称。",
+    "difficulty": "进阶",
+    "kind": "对比题",
+    "stage": "S2 / S3",
+    "topics": [
+      "transformer",
+      "llm",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-012",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "public-iq-transformer-02",
+    "prompt": "Padding Mask 和 Causal Mask 的作用有什么区别？",
+    "answer": "简答：Padding Mask 阻止注意力读取为对齐 Batch 而补的空位；Causal Mask 阻止当前位置看到未来 Token，保证自回归训练与生成因果性一致。\n\n要点：\n- Decoder-only 训练时常同时需要因果 Mask 和 Padding Mask。\n- Mask 通常在 Softmax 前对不可见位置加一个极大负数，使其权重接近 0。\n\n常见追问：不同库对 Mask 的布尔含义、维度和广播规则可能相反，必须用小张量测试验证。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S2",
+    "topics": [
+      "transformer"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / public-iq-transformer-02",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-014",
+    "prompt": "Transformer Decoder 中的 Cross-Attention 与 Self-Attention 有什么不同？",
+    "answer": "简答：Decoder Self-Attention 的 Q、K、V 都来自 Decoder 当前序列；Cross-Attention 的 Q 来自 Decoder 上一子层，K 和 V 来自 Encoder 输出，使生成端能按当前需求读取输入信息。\n\n要点：\n- Decoder Self-Attention 需因果 Mask，Cross-Attention 一般可看到全部 Encoder 非 Padding 位置。\n- 机器翻译、摘要等 Encoder-Decoder 任务通过 Cross-Attention 建立输出与输入的动态对齐。\n\n常见追问：Decoder-only LLM 没有独立 Encoder，通常把指令、上下文和已生成 Token 放在同一因果序列中。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-014",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-015",
+    "prompt": "Transformer 中的 Position-wise FFN 起什么作用？为什么不能只有 Attention？",
+    "answer": "简答：Attention 主要在 Token 之间混合信息；Position-wise FFN 对每个位置独立应用同一个非线性变换，在特征维度上扩展、筛选和重组信息。\n\n要点：\n- 经典 FFN 是 Linear(d_model→d_ff) + Activation + Linear(d_ff→d_model)。\n- GeLU、SwiGLU 等激活/门控形式提供非线性和特征选择。\n- 各位置参数共享但计算独立，因此可高度并行 (Parallelism)。\n\n常见追问：FFN 往往占 Transformer 参数和计算的大部分，它不只是“附属全连接层”。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2 / S3",
+    "topics": [
+      "transformer",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-015",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-016",
+    "prompt": "Transformer 中残差连接 (Residual Connection)和 LayerNorm 分别解决什么问题？",
+    "answer": "简答：残差连接把子层输入直接加到输出，保留信息并为梯度提供捷径；LayerNorm 对单个 Token 的特征维做归一化，稳定深层网络的数值尺度。\n\n要点：\n- 残差要求输入输出维度一致，通常还配合 Dropout。\n- Pre-LN 在子层前归一化，通常更易训练深网络；Post-LN 在残差相加后归一化。\n\n常见追问：不能只说“防止过拟合 (Overfitting)”；它们的主要价值是信息/梯度传播和优化稳定性。",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-016",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-017",
+    "prompt": "Self-Attention 对序列长度的时间和内存复杂度如何？对长文本有什么影响？",
+    "answer": "简答：标准 Self-Attention 需构建 n×n 的注意力关系，与序列长度相关的主要时间项为 O(n²d)，注意力分数/中间量的内存也近似 O(n²)。\n\n要点：\n- 序列长度翻倍时，这部分计算和内存约增四倍。\n- 完整 Transformer Block 还有 QKV/Output 投影和 FFN 的 O(nd²) 计算，短序列时后者也可能占主导。\n- 长文本应结合切块 (Chunking)、检索、稀疏/线性注意力或长上下文模型做取舍。\n\n常见追问：FlashAttention 主要减少显存 IO 和中间存储，并没有在一般情况下把数学上的全注意力改成线性关系。",
+    "difficulty": "进阶",
+    "kind": "复杂度题",
+    "stage": "S2 / S3",
+    "topics": [
+      "transformer",
+      "llm",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-017",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-018",
+    "prompt": "Transformer Decoder 在训练和自回归推理时的输入与并行 (Parallelism)性有什么不同？",
+    "answer": "简答：训练时已知整个目标序列，将目标右移后配合 Causal Mask，可同时计算所有位置的下一 Token 损失；推理时未来 Token 未知，必须一步步生成。\n\n要点：\n- Teacher Forcing 用真实前缀作为训练输入，不表示训练时允许看未来。\n- 推理时 KV Cache 复用旧 Token 的 Key/Value，避免每步重算整个前缀。\n\n常见追问：训练吞吐和单请求生成延迟是不同性能问题，评测指标不能混用。",
+    "difficulty": "进阶",
+    "kind": "流程题",
+    "stage": "S2 / S3",
+    "topics": [
+      "transformer",
+      "llm",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-018",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "tr-019",
+    "prompt": "自回归语言建模和掩码语言建模的训练目标有什么不同？",
+    "answer": "简答：自回归语言模型把序列概率分解为从左到右的条件概率乘积，预测每个下一 Token；掩码语言建模破坏部分输入，利用两侧上下文恢复被选中的 Token。\n\n要点：\n- 自回归目标与开放文本生成直接一致。\n- MLM 能学双向表示，但 [MASK] 和位置独立预测会带来目标不匹配和预测相关性问题。\n\n常见追问：“自编码”在这里指 BERT 类去噪表示目标，不能与传统连续潜变量 Autoencoder 完全等同。",
+    "difficulty": "进阶",
+    "kind": "对比题",
+    "stage": "S2 / S3",
+    "topics": [
+      "transformer",
+      "llm",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / tr-019",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "llm-008",
+    "prompt": "LLM 预训练和监督微调（SFT）在数据、目标和效果上有什么不同？",
+    "answer": "简答：预训练用大规模通用文本和自监督目标学习语言、知识和通用表示；SFT 用数量较少的高质量指令-回答或任务标注对，教模型按期望格式和任务行为回答。\n\n要点：\n- SFT 主要改变行为与任务适配，不是低成本注入大量事实知识的万能方法。\n- 预训练消耗极高，应用工程师更常做 SFT/PEFT、RAG 或 Prompt 适配。\n\n常见追问：评测必须同时检查目标任务提升和通用能力退化。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S3",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / llm-008",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "llm-009",
+    "prompt": "持续预训练、监督微调和偏好对齐分别改变什么，应该怎样选择？",
+    "answer": "**面试直接回答**\n\n持续预训练继续用语言模型目标学习领域文本分布，适合补领域语言和知识；SFT 用输入—理想输出样本教模型遵循任务与格式；偏好对齐用成对偏好或奖励信号调整多个可接受回答之间的选择。应先确认缺口属于知识、任务行为还是偏好，再选择方法并保留基线评测。\n\n**深入解释**\n\n三者的数据合同不同：持续预训练主要需要高质量无标签语料；SFT 需要明确的指令与目标输出；偏好对齐需要同一输入下的 chosen/rejected 或可计算奖励。它们都可能破坏原有能力，因此必须同时评估目标任务、通用能力、安全和格式稳定性。动态事实、权限和可引用证据通常仍应由 RAG 或外部系统承担。\n\n**常见追问**\n\n- 领域知识不足时为什么不能默认直接做 SFT？\n- SFT 之后为什么还可能需要偏好对齐？",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops",
+      "rag",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / llm-009",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "llm-010",
+    "prompt": "微调为什么会发生灾难性遗忘，怎样发现和缓解？",
+    "answer": "**面试直接回答**\n\n模型在窄领域数据上更新过强时，新梯度会覆盖原有通用能力，表现为目标任务提高但通用、旧任务或安全能力下降。应在训练前保存多维基线，用保留评测集持续比较，并通过降低学习率、减少训练步数、混入代表性数据、冻结部分参数或使用 LoRA 等 PEFT 方法缓解。\n\n**深入解释**\n\n不能只看训练 Loss 判断遗忘。至少同时监控目标任务、通用能力、格式遵循、安全与关键旧任务，并检查变化是否超过重复实验波动。缓解方法是减少参数漂移和数据分布偏移，但没有一种方法能保证完全不忘；如果目标只是提供可更新事实，RAG 往往比反复把事实写入参数更合适。\n\n**常见追问**\n\n- LoRA 是否保证不会发生灾难性遗忘？\n- 怎样区分灾难性遗忘与评测集分布变化？",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / llm-010",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "llm-011",
+    "prompt": "Base Model 和 Instruct/Chat Model 有什么区别？",
+    "answer": "简答：Base Model 主要经过下一 Token 预训练，擅长续写输入分布；Instruct/Chat Model 在 Base 基础上经指令微调及可能的偏好/安全对齐，更会遵循命令和对话格式。\n\n要点：\n- 对话模型需按它的 Chat Template 组织 System/User/Assistant 消息。\n- Base 模型可适合特定继续预训练或研究，但不应期望它开箱即用地完成对话指令。\n\n常见追问：“Chat 更好”不是全局结论，应根据任务、授权 (Authorization)、评测、延迟和成本选型。",
+    "difficulty": "基础",
+    "kind": "对比题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / llm-011",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "llm-012",
+    "prompt": "LLM 生成时为什么会反复输出相同词句？应怎样排查和缓解？",
+    "answer": "简答：重复可能来自解码策略太确定、温度过低、当前前缀进入高概率循环、停止条件错误、训练数据重复或模型能力不足。\n\n排查/缓解：\n- 检查 Prompt、Chat Template、Stop Token 和上下文是否重复。\n- 对开放生成调整 Temperature/Top-p，必要时使用 Repetition Penalty 或 n-gram 约束。\n- 记录 Token 级输出与终止原因，用固定用例做回归测试。\n\n常见追问：惩罚过强会伤害需要重复专有名词或代码的场景，不能一刀切。",
+    "difficulty": "进阶",
+    "kind": "故障排查",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / llm-012",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "public-iq-advanced-02",
+    "prompt": "4-bit 模型一定比 16-bit 模型快吗？",
+    "answer": "**面试直接回答**\n\n不一定。它通常更省显存，但速度取决于量化格式、反量化开销、内核、批次和硬件支持；某些配置只是把模型放得下，不会获得更高吞吐。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 量化用更少位数表示权重、激活或 KV Cache，以减少内存与带宽，有时提高吞吐；代价可能是精度下降、校准成本、算子限制和硬件兼容问题。\n- 权重量化不等于 KV Cache 量化，也不保证所有硬件都加速。必须用目标任务、延迟、吞吐和显存实测。\n- GPTQ、AWQ 常见于训练后权重量化：GPTQ 以重构误差为中心逐层量化，AWQ 利用激活统计保护重要权重；`bitsandbytes` 常用于方便地加载 8-bit/4-bit 权重和 QLoRA 训练。名称不能替代实际格式、内核和硬件兼容检查。\n- 量化敏感性并不均匀。输出头、Embedding、归一化或少数异常通道是否保留更高精度，要根据实现和任务评测决定，不能假设所有层一律 4-bit 仍然“几乎无损”。\n\n**常见追问**\n\n- Weight-only Quantization 与激活量化分别减少什么开销？\n- 为什么 AWQ/GPTQ 文件更小，却可能在不匹配的硬件上更慢？",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / public-iq-advanced-02",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "llm-014",
+    "prompt": "LoRA 的秩 `r` 越大越好吗？",
+    "answer": "**面试直接回答**\n\n不一定。更大 `r` 增加表达能力、训练参数、显存和过拟合风险；应依据任务复杂度、数据量和评测选择。目标层、学习率和数据质量同样重要。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 低秩适配（Low-Rank Adaptation, LoRA）冻结基础权重，在目标线性层加入两个低秩矩阵，训练参数量显著减少。\n- QLoRA 通常把基础模型以低位权重加载并在其上训练 LoRA 适配器，进一步降低显存；量化基础权重通常保持冻结，计算精度与量化格式仍需配置。\n\n**大白话理解（Plain-language Intuition）**\n全量微调像重写整本书，LoRA 像在关键章节增加一组可训练批注；QLoRA 还把原书压缩保存，从而减少显存，但批注是否有效仍要通过任务评测验证。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom peft import LoraConfig, TaskType, get_peft_model\n\nconfig = LoraConfig(\n    task_type=TaskType.CAUSAL_LM,\n    r=8,\n    lora_alpha=16,\n    lora_dropout=0.05,\n    target_modules=[\"q_proj\", \"v_proj\"],\n)\npeft_model = get_peft_model(base_model, config)\npeft_model.print_trainable_parameters()\n```\n示例依赖兼容的 `base_model`；最后会输出可训练参数量、总参数量及比例，具体数值取决于基础模型。目标模块名称因模型架构而异，必须检查实际模块。",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / llm-014",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "llm-015",
+    "prompt": "如何判断一次微调是真的有效，而不是数据泄漏、过拟合或只学会固定格式？",
+    "answer": "**面试直接回答**\n\n训练前先固定基础模型基线和独立测试集，按真实案例或来源切分，避免同一模板、文档或用户同时进入训练和测试。微调后不仅比较目标指标，还要检查未见表达、困难样本、格式通过率、通用能力、安全和人工 Bad Case；只看训练 Loss 下降或几个演示样例不能证明有效。\n\n**深入解释**\n\n数据先做去重、模板和标签一致性检查，并记录来源、许可证与敏感信息处理。验证集用于早停和超参数选择，测试集只做最终比较；若持续根据测试结果改数据，测试集就被间接训练。还应与更简单的 Prompt、Few-shot、RAG 或规则基线比较，确认提升值得训练、部署和维护成本。\n\n**常见追问**\n\n- 指令数据随机切分为什么可能造成严重泄漏？\n- Loss 更低但人工评价变差可能是什么原因？",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / llm-015",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "llm-016",
+    "prompt": "上下文窗口越大，回答一定越好吗？",
+    "answer": "**面试直接回答**\n\n不一定。更长上下文允许放入更多信息，但也增加延迟、成本和无关内容干扰，模型还可能忽视位于中间的信息。应先检索、去重和压缩，只提供完成任务所需的高质量上下文。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Token 是模型处理文本的离散单位。上下文窗口（Context Window）限制一次请求可参与计算的输入与输出 Token 总量；最大输出长度只限制生成端，不会扩大模型上下文能力。\n- System、User、Assistant 等消息角色用于表达指令层级和历史对话，但具体优先级与支持方式取决于模型和 API。应用仍必须在代码层执行权限和数据校验。\n\n**最小代码示例（Minimal Example）**\n```python\nmessages = [\n    {\"role\": \"system\", \"content\": \"只根据给定资料回答。\"},\n    {\"role\": \"user\", \"content\": \"解释向量检索。\"},\n]\nprint([message[\"role\"] for message in messages])  # 输出: ['system', 'user']\n```",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "rag",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / llm-016",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "s0-001",
+    "prompt": "Python 解释器、虚拟环境和项目依赖之间是什么关系？",
+    "answer": "简答：解释器是真正执行 Python 代码的程序；虚拟环境为某个项目指向特定解释器并提供隔离的 site-packages；依赖文件记录项目需要安装的包与版本约束。\n\n要点：\n- “激活”主要是把虚拟环境 bin 放到 PATH 前面，也可直接调用 `.venv/bin/python`。\n- `python -m pip` 能明确 pip 属于哪个解释器，比盲信系统 `pip` 更稳妥。\n- 可复现不只是列包名，还要说明 Python 版本、平台和锁定/更新策略。\n\n常见追问：虚拟环境隔离 Python 包，但不等于 Docker 级别的系统库、进程和网络隔离。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S0",
+    "topics": [
+      "python",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / s0-001",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "s0-002",
+    "prompt": "为什么明明有 GPU，`torch.cuda.is_available()` 仍可能是 `False`？",
+    "answer": "**面试直接回答**\n\n常见原因包括安装了 CPU 版 PyTorch、驱动不兼容、容器没有透传 GPU、当前平台不是 CUDA 平台、环境变量或动态库加载失败。排查时应分别确认硬件与驱动、PyTorch 构建信息、容器运行参数和实际解释器环境，不能只看是否安装了 CUDA Toolkit。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- `torch.device` 决定张量（Tensor）和模型在哪个计算设备上执行；参与同一次运算的张量通常必须位于兼容设备。\n- NVIDIA 驱动（NVIDIA Driver）负责操作系统与 GPU 通信；CUDA 运行时（CUDA Runtime）提供 GPU 计算库；PyTorch 安装包需要与驱动能力和平台兼容。系统安装了 CUDA Toolkit，不代表当前 PyTorch 构建一定支持 CUDA。\n\n**最小代码示例（Minimal Example）**\n```python\nimport torch\n\ndevice = torch.device(\"cuda\" if torch.cuda.is_available() else \"cpu\")\ntensor = torch.tensor([1.0, 2.0], device=device)\nprint(device.type in {\"cpu\", \"cuda\", \"mps\"})  # 输出: True\nprint(tensor.device.type == device.type)         # 输出: True\n```",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / s0-002",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "s0-003",
+    "prompt": "为什么 GPU 计时前后要调用同步操作？",
+    "answer": "**面试直接回答**\n\nCPU 通常只把 GPU 内核放入执行队列便立即返回。如果不等待队列完成，结束时间早于真实计算完成时间，得到的是提交延迟而不是执行延迟。同步会让 CPU 等待 GPU 完成本轮任务，从而测到实际耗时。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 短代码计时优先使用单调时钟（Monotonic Clock），例如 `time.perf_counter()`，避免系统时间校准造成倒退。\n- 首次运行可能包含导入、内核编译、缓存填充和内存分配，因此需要预热（Warm-up）；GPU 操作通常异步提交，计时前后需要同步，否则测到的主要是任务提交时间。\n- 单次测量受调度、缓存和后台任务影响，应重复多次报告中位数或分位数。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom statistics import median\nfrom time import perf_counter\n\ndurations = []\nfor _ in range(5):\n    started_at = perf_counter()\n    sum(range(10_000))\n    durations.append((perf_counter() - started_at) * 1_000)\n\nprint(len(durations))               # 输出: 5\nprint(median(durations) >= 0.0)     # 输出: True\n```",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "python",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / s0-003",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "s0-004",
+    "prompt": "把采集数据写入数据库时，如何同时做到防 SQL 注入、去重和一致性？",
+    "answer": "简答：用驱动的参数化查询传值，不拼接 SQL；对业务唯一键建 Unique Constraint；把需要共同成功的写入放在事务中，失败时回滚。\n\n要点：\n- 参数化只用于值，表名/列名等结构参数需白名单。\n- “先查再插”在并发 (Concurrency)下仍可重复，应让数据库约束做最终保证，配合 Upsert 或捕获冲突。\n- 事务边界不要包含长时间网络请求，否则会长时间占用连接和锁。\n\n常见追问：重试整个事务前要确认操作幂等，否则外部副作用可能重复发生。",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S0 / S5",
+    "topics": [
+      "database",
+      "backend",
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / s0-004",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "py-007",
+    "prompt": "dataclass 和 Pydantic Model 的定位有什么不同？",
+    "answer": "简答：`dataclass` 主要用更少样板代码表达 Python 内部数据对象；Pydantic Model 主要在系统边界对外部输入做解析、类型验证、序列化和 Schema 生成。\n\n要点：\n- 类型提示本身默认不是运行时验证；dataclass 不会自动拒绝错误类型。\n- FastAPI 请求/响应、配置和 LLM 结构化输出 (Structured Output)适合 Pydantic；内部算法中的轻量值对象可用 dataclass。\n\n常见追问：不要在每个内部函数重复做昂贵验证；在信任边界验证，内部保持清晰类型。",
+    "difficulty": "基础",
+    "kind": "选型题",
+    "stage": "S1 / S3",
+    "topics": [
+      "python",
+      "backend",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / py-007",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "public-iq-fundamentals-01",
+    "prompt": "连接超时和读取超时有什么区别，为什么要分别设置？",
+    "answer": "**面试直接回答**\n\n连接超时限制建立 TCP/TLS 连接可等待多久；读取超时限制连接建立后等待响应数据可等待多久。两者对应不同失败阶段，分别设置才能避免连接故障和慢响应无限占用资源。\n\n**深入解释**\n\n一次 HTTP 调用包含解析、连接、写入、服务端处理和读取等阶段。只设一个很大的总超时会掩盖瓶颈；超时后是否重试还要结合方法幂等性、错误类型和剩余时间预算。\n\n**常见追问**\n\n- 流式响应的读取超时如何理解？\n- 超时后为什么不能无条件重试 POST？",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "fundamentals",
+      "backend",
+      "python",
+      "llm",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "fundamentals / public-iq-fundamentals-01",
+    "content_type": "interview",
+    "primary_topic": "fundamentals"
+  },
+  {
+    "id": "rag-010",
+    "prompt": "如何判断 PDF 是文本型还是扫描型？扫描 PDF 的入库流程应该怎样设计？",
+    "answer": "简答：先按页尝试提取文本并检查非空字符比例、乱码和页面覆盖；无文本层或质量过低时，渲染页面图像后 OCR，再做版面顺序、页眉页脚、断行与语言清理。\n\n要点：\n- OCR 结果必须保留文件名、物理页码、坐标/段落等回溯信息。\n- 空页、加密页、旋转、双栏、表格和低置信度要记录失败，不能把空文本写入索引。\n- 对公式、否定词、数字和专有名词做人工抽查。\n\n常见追问：光看文件扩展名或 PDF 能否打开，无法判断它有没有可用文本层。",
+    "difficulty": "进阶",
+    "kind": "流程题",
+    "stage": "S4",
+    "topics": [
+      "rag",
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-010",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-011",
+    "prompt": "为什么 Metadata 对 RAG 很重要？",
+    "answer": "**面试直接回答**\n\n它用于权限过滤、版本过滤、引用回溯、时间筛选和定位原文。只有向量和文本而没有稳定来源信息，系统很难证明答案依据、删除某份文档或隔离不同用户数据。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 文档解析应同时产出正文与元数据（Metadata），例如来源 ID、文件名、页码、标题路径、时间、权限域和内容哈希。\n- 页眉页脚、乱码、重复文本和空内容会污染检索。扫描 PDF 只有图像层，需要光学字符识别（Optical Character Recognition, OCR）；不能把解析得到的空字符串当成“没有内容”。\n- 解析失败应记录状态与原因，不应向索引写入空 Chunk。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass ParsedPage:\n    source_id: str\n    page_number: int\n    title_path: tuple[str, ...]\n    text: str\n\npage = ParsedPage(\"manual-v1\", 12, (\"安装\", \"GPU\"), \"检查驱动版本\")\nprint(page.page_number)  # 输出: 12\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm",
+      "backend",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-011",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "rag-012",
+    "prompt": "Recall@K 提高后，最终回答为什么可能变差？",
+    "answer": "**面试直接回答**\n\n召回更多正确证据的同时也可能引入大量干扰项；排序、上下文去重或生成模型可能无法分辨冲突。应联合评估候选精度、重排、上下文质量、答案正确性、忠实度、延迟和成本。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Recall@K 衡量前 K 个结果覆盖了多少相关文档，适合关注“证据是否被找回”。\n- 平均倒数排名（Mean Reciprocal Rank, MRR）关注第一个相关结果的位置，单题倒数排名为 1/rank。\n- 归一化折损累计增益（Normalized Discounted Cumulative Gain, NDCG）支持多级相关性，并对高排名结果赋予更大权重。\n\n**最小代码示例（Minimal Example）**\n```python\ndef recall_at_k(ranked_ids: list[str], relevant_ids: set[str], k: int) -> float:\n    if not relevant_ids:\n        raise ValueError(\"相关文档集合不能为空\")\n    return len(set(ranked_ids[:k]) & relevant_ids) / len(relevant_ids)\n\ndef reciprocal_rank(ranked_ids: list[str], relevant_ids: set[str]) -> float:\n    return next((1 / rank for rank, item in enumerate(ranked_ids, 1) if item in relevant_ids), 0.0)\n\nranked = [\"d3\", \"d1\", \"d2\"]\nrelevant = {\"d1\", \"d2\"}\nprint(recall_at_k(ranked, relevant, 2))  # 输出: 0.5\nprint(reciprocal_rank(ranked, relevant)) # 输出: 0.5\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm",
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / rag-012",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-01-q01",
+    "prompt": "虚拟环境和 Docker 有什么区别？",
+    "answer": "**面试直接回答**\n\n虚拟环境只隔离 Python 包和解释器入口，不隔离操作系统库、进程、网络或文件系统；Docker 容器（Container）基于镜像（Image）封装应用及系统级依赖，隔离边界更完整，但构建和运行成本也更高。开发阶段常同时使用两者：本地虚拟环境提高迭代速度，容器保证交付环境一致。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Python 解释器（Python Interpreter）负责执行代码；虚拟环境（Virtual Environment）为项目提供独立的解释器入口与第三方包目录；依赖清单（Dependency Manifest）记录项目需要哪些包和版本。\n- 虚拟环境解决“项目 A 与项目 B 依赖版本冲突”，锁定文件解决“同一项目在不同机器安装出不同依赖集合”。仅创建虚拟环境但不记录版本，仍不能保证复现。\n\n**大白话理解（Plain-language Intuition）**\n解释器像厨房，虚拟环境像每个项目自己的储物柜，锁定文件则是精确采购清单。只有三者都明确，别人才能做出同一道菜。\n\n**使用场景与最小示例（Scenario and Minimal Example）**\n```bash\npython3 -m venv .venv\nsource .venv/bin/activate\npython -m pip install -r requirements.txt\npython -c \"import sys; print(sys.executable)\"\n```\n上述命令会创建目录并安装依赖，属于文件与网络副作用；解释器路径取决于当前项目位置。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / obs-iq-01-q01",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "obs-iq-01-q02",
+    "prompt": "为什么不建议只提交 `pip freeze` 的结果？",
+    "answer": "**面试直接回答**\n\n`pip freeze` 会记录当前环境中的全部直接和间接依赖，可能混入无关包，也不能表达哪些是直接依赖。更可靠的方式是维护直接依赖清单，并使用锁定工具解析和固定完整依赖图。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / obs-iq-01-q02",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "obs-iq-01-q03",
+    "prompt": "`is` 和 `==` 有什么区别？",
+    "answer": "**面试直接回答**\n\n`is` 判断两个引用是否指向同一个对象，`==` 调用相等性协议比较值。判断 `None` 应使用 `is None`；比较业务值通常使用 `==`。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Python 变量保存对象引用（Object Reference），不是把值复制进变量盒子。可变对象（Mutable Object）可原地改变，不可变对象（Immutable Object）需要创建新对象。\n- 浅拷贝（Shallow Copy）只复制最外层容器，内部对象仍共享；深拷贝（Deep Copy）递归复制对象图，但代价更高，也不适合复制数据库连接等外部资源。\n- 默认参数在函数定义时求值，因此不能用可变对象作为共享默认容器。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom typing import Optional\n\ndef append_item(item: str, items: Optional[list[str]] = None) -> list[str]:\n    # 每次调用都创建新列表，避免多个调用共享同一个默认对象。\n    result = [] if items is None else items\n    result.append(item)\n    return result\n\nprint(append_item(\"a\"))  # 输出: ['a']\nprint(append_item(\"b\"))  # 输出: ['b']\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / obs-iq-01-q03",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "public-iq-python-02",
+    "prompt": "为什么函数默认参数不能写成 `items=[]`？",
+    "answer": "**面试直接回答**\n\n默认对象只在函数定义时创建一次，后续调用会复用同一列表，导致状态跨调用泄漏。应以 `None` 为哨兵，在函数内部创建新容器。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / public-iq-python-02",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "obs-iq-01-q05",
+    "prompt": "类型提示能否替代运行时校验？",
+    "answer": "**面试直接回答**\n\n不能。Python 默认不会依据类型提示拒绝错误输入；外部 API、配置和文件数据仍需 Pydantic 或显式校验。类型提示主要提前暴露开发期错误并表达接口契约。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- `dataclass` 适合表达内部数据结构；Pydantic 适合位于系统边界的外部输入验证和序列化。类型提示（Type Hint）主要服务静态检查、IDE 和阅读，不会自动阻止运行时传入错误类型。\n- `if __name__ == \"__main__\":` 只在文件被直接运行时执行入口代码，被其他模块导入时不会执行，便于复用和测试。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass Document:\n    title: str\n    content: str\n\ndocument = Document(title=\"RAG\", content=\"retrieval\")\nprint(document.title)  # 输出: RAG\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / obs-iq-01-q05",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "obs-iq-01-q06",
+    "prompt": "`logger.error()` 和 `logger.exception()` 有什么区别？",
+    "answer": "**面试直接回答**\n\n`logger.exception()` 应在异常处理上下文中使用，会自动附带当前 traceback；`logger.error()` 默认只记录消息。没有 traceback 时，线上日志可能只能看到“失败”而无法定位调用链。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 异常应在能够恢复、转换或增加上下文的层处理；不知道如何处理时应继续传播。\n- 可重试错误（Retryable Error）通常来自短暂网络或服务故障；认证失败、输入错误和业务拒绝通常不可重试。\n- 日志记录事件及上下文，不能记录 API Key、密码、完整隐私文本或不可控的大模型上下文。异常日志应保留 traceback 和请求标识符（Request ID）。\n\n**最小代码示例（Minimal Example）**\n```python\nimport logging\n\nlogger = logging.getLogger(__name__)\n\ndef parse_count(raw_value: str) -> int:\n    try:\n        return int(raw_value)\n    except ValueError:\n        logger.exception(\"count 解析失败\")\n        raise\n\nprint(parse_count(\"3\"))  # 输出: 3\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / obs-iq-01-q06",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "obs-iq-01-q07",
+    "prompt": "重试为什么必须设置上限？",
+    "answer": "**面试直接回答**\n\n无限重试会放大下游故障、占用连接和工作线程，并可能重复执行有副作用的操作。可靠重试需要限定次数、总时长、退避、抖动和可重试异常范围。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / obs-iq-01-q07",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "obs-iq-01-q08",
+    "prompt": "为什么 RAG 数据准备常使用 JSONL？",
+    "answer": "**面试直接回答**\n\n每行可独立解析，便于流式处理、增量追加、定位坏数据和分片；相比一个巨大 JSON 数组，读取单条记录不需要先把整个文件载入内存。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- JSON 保存一个完整值；JSONL 每行一个独立 JSON 对象，适合追加、流式读取和隔离坏行；CSV 是表格交换格式，需要明确编码、分隔符、引号和空值语义。\n- 生成器（Generator）按需产生元素，可降低大文件峰值内存；Pandas 适合列式清洗、聚合和探索，但超大数据仍需要分块或其他执行引擎。\n\n**最小代码示例（Minimal Example）**\n```python\nimport json\nfrom collections.abc import Iterator\n\ndef parse_jsonl(lines: list[str]) -> Iterator[dict[str, object]]:\n    for line in lines:\n        if stripped := line.strip():\n            yield json.loads(stripped)\n\nrecords = list(parse_jsonl(['{\"id\": 1}', '', '{\"id\": 2}']))\nprint(records)  # 输出: [{'id': 1}, {'id': 2}]\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / obs-iq-01-q08",
+    "content_type": "interview",
+    "primary_topic": "python"
+  },
+  {
+    "id": "obs-iq-02-q02",
+    "prompt": "代码写完后应该先优化还是先测试？",
+    "answer": "**面试直接回答**\n\n先用代表性与边界用例验证正确性，再根据约束和瓶颈优化；每次优化后运行回归测试。未经验证的复杂优化比清晰正确的基线风险更高。\n\n**深入解释**\n\n**回答步骤（Answer Steps）**\n1. 复述输入、输出、约束和边界。\n2. 给出暴力解法及复杂度，再说明优化依据。\n3. 写代码时维护循环或递归不变量。\n4. 用空输入、单元素、重复值、最大规模和错误输入验证。\n5. 主动说明时间和空间复杂度。",
+    "difficulty": "基础",
+    "kind": "算法题",
+    "stage": "S1",
+    "topics": [
+      "algorithm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / obs-iq-02-q02",
+    "content_type": "interview",
+    "primary_topic": "algorithm"
+  },
+  {
+    "id": "obs-iq-02-q03",
+    "prompt": "海量结果中取 Top-K，为什么常用大小为 K 的最小堆？",
+    "answer": "**面试直接回答**\n\n遍历数据时只保留当前最大的 K 个元素：新元素大于堆顶才替换。这样空间复杂度为 O(K)，时间复杂度为 O(n log K)，通常比对全部 n 个元素排序的 O(n log n) 更省。\n\n**深入解释**\n\n最小堆的堆顶正好是当前 Top-K 中最弱的元素，因此一次比较就能判断新元素是否值得进入结果集。若 K 接近 n，完整排序或选择算法可能更合适。\n\n**常见追问**\n\n- 如果要找最小的 K 个元素，应使用什么堆？\n- 流式数据中如何处理并列分数？",
+    "difficulty": "进阶",
+    "kind": "算法题",
+    "stage": "S1",
+    "topics": [
+      "algorithm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / obs-iq-02-q03",
+    "content_type": "interview",
+    "primary_topic": "algorithm"
+  },
+  {
+    "id": "obs-iq-03-q02",
+    "prompt": "遇到 `429 Too Many Requests` 应如何处理？",
+    "answer": "**面试直接回答**\n\n先读取服务端提供的 `Retry-After` 或限流信息，在允许重试时采用有上限的指数退避（Exponential Backoff）和随机抖动（Jitter），同时限制客户端并发。不能立即无限重试，否则会进一步加重限流。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- HTTP 请求由方法（Method）、URL、Header 和可选 Body 组成，响应包含状态码、Header 和 Body。`2xx` 表示成功类别，`4xx` 表示请求或权限问题，`5xx` 表示服务器端失败，但业务仍需按具体状态码处理。\n- 连接超时（Connect Timeout）限制建立连接的等待，读取超时（Read Timeout）限制等待响应数据的时间。\n- 幂等（Idempotency）表示同一操作执行一次或多次对最终状态的影响相同。重试非幂等写操作必须使用幂等键或去重机制。\n\n**最小代码示例（Minimal Example）**\n```python\nimport httpx\n\nwith httpx.Client(timeout=httpx.Timeout(10.0, connect=3.0)) as client:\n    response = client.get(\"https://example.com/api/items\")\n    response.raise_for_status()\n```\n该示例会访问外部网络；成功时不打印内容，`response` 保存响应，非成功状态会抛出异常。实际结果依赖服务状态。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S1",
+    "topics": [
+      "fundamentals",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "fundamentals / obs-iq-03-q02",
+    "content_type": "interview",
+    "primary_topic": "fundamentals"
+  },
+  {
+    "id": "obs-iq-04-q03",
+    "prompt": "为什么训练时常见 `Expected all tensors to be on the same device`？",
+    "answer": "**面试直接回答**\n\n同一算子无法直接组合位于 CPU 与 GPU 的张量。常见遗漏是只移动模型、没有移动标签，或运行中创建了默认位于 CPU 的新张量。应在数据进入模型前统一设备，并避免在 `forward()` 内无意创建 CPU 张量。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 张量（Tensor）是带形状（Shape）、数据类型（Dtype）和设备（Device）的多维数组。形状决定各轴语义，数据类型影响精度、内存和可用运算，设备决定执行位置。\n- 模型输入的批次维、序列维和特征维必须与层的接口契约一致；形状能广播（Broadcasting）不代表语义一定正确。\n\n**最小代码示例（Minimal Example）**\n```python\nimport torch\n\nbatch = torch.tensor([[1.0, 2.0], [3.0, 4.0]], dtype=torch.float32)\nprint(batch.shape)  # 输出: torch.Size([2, 2])\nprint(batch.dtype)  # 输出: torch.float32\n```",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / obs-iq-04-q03",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "obs-iq-04-q04",
+    "prompt": "增大 `num_workers` 是否一定能加快训练？",
+    "answer": "**面试直接回答**\n\n不一定。它只可能改善数据准备瓶颈，还会增加进程、序列化、内存和 I/O 压力；数据已经在内存中、存储较慢或平台进程启动代价较高时，过多 worker 反而更慢。应依据 GPU 等待时间和数据加载分析调参。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- `Dataset` 定义“如何按索引取得一个样本”，`DataLoader` 负责批处理、打乱、并行加载和调用 `collate_fn` 组装不规则样本。\n- 训练集通常打乱以减少样本顺序偏差；验证集不需要打乱。可变长度文本必须填充、截断或通过自定义组批逻辑处理。\n\n**最小代码示例（Minimal Example）**\n```python\nimport torch\nfrom torch.utils.data import DataLoader, TensorDataset\n\nfeatures = torch.tensor([[1.0], [2.0], [3.0], [4.0]])\nlabels = torch.tensor([0, 0, 1, 1])\nloader = DataLoader(TensorDataset(features, labels), batch_size=2, shuffle=False)\nfirst_features, first_labels = next(iter(loader))\nprint(first_features.shape)  # 输出: torch.Size([2, 1])\nprint(first_labels.tolist()) # 输出: [0, 0]\n```",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / obs-iq-04-q04",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "obs-iq-04-q08",
+    "prompt": "混合精度和梯度累积分别解决什么问题，能否互相替代？",
+    "answer": "**面试直接回答**\n\n混合精度用较低精度参与部分计算，主要减少显存和提高吞吐；梯度累积把多个小批次的梯度累加后再更新参数，用较小显存模拟更大的有效批次。二者解决的问题不同，可以组合，但不能互相替代。\n\n**深入解释**\n\n混合精度要关注数值范围、损失缩放和算子支持；梯度累积要正确缩放损失，并明确优化器更新、学习率调度和梯度清零发生在累积边界。有效批量大小约等于单卡批量 × 累积步数 × 数据并行卡数。\n\n**常见追问**\n\n- 梯度累积为什么不会降低单次前向的激活显存？\n- BF16 和 FP16 的数值范围有什么差别？",
+    "difficulty": "进阶",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / obs-iq-04-q08",
+    "content_type": "interview",
+    "primary_topic": "ml"
+  },
+  {
+    "id": "obs-iq-05-q01",
+    "prompt": "为什么不能把 Token ID 当作有大小关系的数值特征？",
+    "answer": "**面试直接回答**\n\nToken ID 只是词表索引，ID 之间的数值距离没有语义。模型先通过嵌入层把离散 ID 映射为连续向量，语义关系由训练后的向量与后续网络表示。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 字符（Character）、词（Word）和子词（Subword）是不同粒度；Token 是分词器（Tokenizer）输出的模型单位，不一定对应自然语言中的完整词。\n- 词表（Vocabulary）把 Token 映射为整数 ID；特殊 Token 表达填充、序列边界或未知项。Padding 对齐批次长度，Truncation 限制输入长度，Attention Mask 告诉模型哪些位置是真实内容。\n\n**最小代码示例（Minimal Example）**\n```python\nsequences = [[101, 11, 102], [101, 22, 33, 102]]\nmax_length = max(map(len, sequences))\npadded = [sequence + [0] * (max_length - len(sequence)) for sequence in sequences]\nmasks = [[int(token_id != 0) for token_id in sequence] for sequence in padded]\nprint(padded)  # 输出: [[101, 11, 102, 0], [101, 22, 33, 102]]\nprint(masks)   # 输出: [[1, 1, 1, 0], [1, 1, 1, 1]]\n```",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / obs-iq-05-q01",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "obs-iq-05-q02",
+    "prompt": "Pre-Norm 与 Post-Norm 有什么区别，为什么现代大模型常使用 Pre-Norm？",
+    "answer": "**面试直接回答**\n\n区别是 LayerNorm 放在子层之前还是残差相加之后。Pre-Norm 通常让梯度沿残差主路径传播得更稳定，更适合训练深层 Transformer；Post-Norm 更接近原始 Transformer，但深层训练往往更依赖初始化、学习率预热等技巧。它们不是只交换一行代码，残差块的计算顺序和优化性质都发生了变化。\n\n**深入解释**\n\n对子层 F，Post-Norm 可写成 y=LN(x+F(x))；Pre-Norm 则是 y=x+F(LN(x))。Pre-Norm 的恒等残差路径不被每层归一化截断，因此深层网络在初始化阶段通常更容易传播梯度。但“更容易训练”不等于所有任务的最终效果必然更高，仍需结合模型结构、初始化、学习率与训练规模比较。\n\n**常见追问**\n\n- Pre-Norm 是否意味着完全不需要学习率预热？\n- 为什么不能从模型结构图中的 `Add & Norm` 直接断定所有 Transformer 都是 Post-Norm？",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / obs-iq-05-q02",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "obs-iq-05-q04",
+    "prompt": "MHA、MQA、GQA 与 MLA 有什么区别，它们怎样影响质量、KV Cache 和吞吐？",
+    "answer": "**面试直接回答**\n\nMHA 为每个查询头保留独立 K、V 头，表达能力强但 KV Cache 大；MQA 让所有查询头共享一组 K、V，最省缓存但可能损失质量；GQA 让若干查询头共享一组 K、V，是质量与效率的折中；MLA 通过低秩潜在表示压缩需要缓存的键值信息，具体收益依赖模型和运行时实现。\n\n**深入解释**\n\n自回归生成时，历史 Token 的 K、V 会被缓存，而当前步只产生新的查询。因此减少 K/V 头数或压缩其表示，可以降低显存占用和读取带宽，从而支持更长上下文或更高并发。MHA、MQA、GQA、MLA 不是服务端可随意切换的参数，它们通常由模型训练时的架构决定；运行时还必须提供对应算子支持。\n\n**常见追问**\n\n- 为什么共享 K、V 比共享 Q 更直接影响 KV Cache？\n- GQA 的分组数量过少或过多分别接近哪两种结构？",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / obs-iq-05-q04",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "obs-iq-05-q07",
+    "prompt": "Transformer 是否在所有场景都优于 RNN？",
+    "answer": "**面试直接回答**\n\n不是。Transformer 通常更适合大规模并行训练和长程依赖，但标准注意力在长序列上计算与显存成本高；流式、低资源或严格在线状态场景仍可能使用循环结构、卷积结构或高效注意力变体。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 循环神经网络（Recurrent Neural Network, RNN）按时间步递归更新隐藏状态，天然表达顺序，但长路径反向传播容易梯度消失或爆炸，且时间步依赖限制训练并行。\n- Transformer 使用自注意力（Self-Attention）直接建立任意位置之间的依赖，并通过位置编码补充顺序信息；训练并行性更好，但标准全注意力的时间和注意力矩阵空间复杂度随序列长度近似为 O(n^2)。\n\n**大白话理解（Plain-language Intuition）**\nRNN 像按顺序传话，每一步都依赖上一人；Transformer 像让所有词同时查看相关词。后者更容易并行和捕捉远距离关系，但长文本中“所有人互相查看”会变得昂贵。",
+    "difficulty": "基础",
+    "kind": "原理题",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / obs-iq-05-q07",
+    "content_type": "interview",
+    "primary_topic": "transformer"
+  },
+  {
+    "id": "obs-iq-06-q02",
+    "prompt": "什么是 Lost in the Middle，RAG 上下文应该怎样排序、引用和拒答？",
+    "answer": "**面试直接回答**\n\nLost in the Middle 指模型对长上下文中间位置的重要信息利用较差，不能因为上下文窗口放得下就认为模型能等质量地使用全部内容。RAG 应先过滤无关证据，再按相关性、权限、时效和文档多样性组装，保留来源标识，并在证据不足或冲突时明确拒答或降级。\n\n**深入解释**\n\n上下文组装的输入是候选 Chunk 及其分数、来源、时间和权限，输出是满足 Token 预算的有序证据包。只按向量分数机械拼接，可能造成重复、关键信息被埋在中间、不同版本冲突和引用错位。应在离线评测中扰动证据顺序和长度，检查答案是否依赖正确证据，而不是依赖位置偏好。\n\n**常见追问**\n\n- 是否应该把最相关文档全部放在 Prompt 最前面？\n- 上下文不足时，“拒答”与“返回检索结果供用户判断”如何选择？",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / obs-iq-06-q02",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "obs-iq-06-q03",
+    "prompt": "如何从能力、安全、延迟、吞吐和成本评估一个新开源模型？",
+    "answer": "**面试直接回答**\n\n先根据真实业务定义硬约束和评测集，再在同一运行时、精度、输入长度、输出长度和并发下比较任务质量、结构化输出通过率、安全边界、TTFT、每 Token 延迟、吞吐、峰值显存和单位请求成本。公开榜单只能用于初筛，不能代替本地基准和失败案例分析。\n\n**深入解释**\n\n评估输入包括模型权重与许可证、Tokenizer、上下文长度、硬件预算和目标请求分布；输出应是可复现的质量—性能—风险报告。先做正确性与许可证门槛，再做离线业务评测，最后做预热后的并发压测。量化版本、Chat Template、推理引擎和采样参数必须锁定，否则比较的可能不是模型本身。上线前还要验证回滚、模型版本记录和敏感数据边界。\n\n**常见追问**\n\n- 为什么不能直接比较两个模型的单次生成耗时？\n- 如果质量更高但成本翻倍，如何做决策？",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / obs-iq-06-q03",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "obs-iq-06-q06",
+    "prompt": "什么场景适合本地模型？",
+    "answer": "**面试直接回答**\n\n数据不能离开受控环境、调用规模稳定且硬件成本可接受、需要定制模型或离线运行时更适合本地部署；如果请求量波动大、团队缺少推理运维能力或需要最强闭源模型能力，云端 API 往往更合适。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 云端模型通常降低部署门槛并提供弹性能力，但存在网络、供应商、价格和数据出境约束。\n- 本地模型提供更强的数据和运行控制，但需要显存、吞吐规划、模型更新、监控和安全维护。选型应同时衡量质量、延迟、吞吐、成本、隐私、可用性和团队运维能力。",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / obs-iq-06-q06",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "obs-iq-06-q08",
+    "prompt": "Prompt 为什么不能代替权限控制？",
+    "answer": "**面试直接回答**\n\n用户或检索文档可以通过提示注入改变模型行为，模型也可能忽略文字规则。权限必须由可信代码依据身份和资源归属强制执行，模型只负责提出建议或生成参数。",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / obs-iq-06-q08",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "obs-iq-06-q10",
+    "prompt": "客户端中断流式连接后，服务端还应继续生成吗？",
+    "answer": "**面试直接回答**\n\n通常应传播取消信号并释放上游 HTTP 连接、生成任务和并发额度，否则会浪费 Token 与算力。若业务要求后台完成，则应显式转为后台任务并提供任务 ID，不能让行为含糊。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 普通响应在模型完成后一次返回，接口简单但首字节延迟较高；流式响应逐块传输，可降低用户感知等待，但必须处理断开、取消、半成品、背压和最终统计。\n- 服务端发送事件（Server-Sent Events, SSE）适合服务器单向推送文本事件；WebSocket 适合需要双向持续通信的场景。\n\n**最小代码示例（Minimal Example）**\n```python\ndef event_stream() -> list[str]:\n    return [\"data: first\\n\\n\", \"data: second\\n\\n\", \"event: done\\ndata: {}\\n\\n\"]\n\nprint(len(event_stream()))  # 输出: 3\n```",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / obs-iq-06-q10",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "obs-iq-06-q11",
+    "prompt": "结构化输出校验失败是否应该无限让模型自我修复？",
+    "answer": "**面试直接回答**\n\n不应该。修复次数必须有限，并记录原始错误；持续失败可能是 Schema、模型能力或输入本身的问题。达到上限后应返回可诊断错误或转人工处理，避免无限成本和循环。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 常见错误包括鉴权、限流、连接、读取超时、无效请求、内容安全拒绝、模型不可用和无效结构化输出。\n- 记录模型、供应商、请求 ID、延迟、输入/输出 Token、结束原因和错误类别；不要记录密钥或默认记录完整敏感 Prompt。\n\n**最小代码示例（Minimal Example）**\n```python\ndef retry_delay(attempt: int, base: float = 0.5, cap: float = 8.0) -> float:\n    return min(cap, base * (2 ** attempt))\n\nprint(retry_delay(0))  # 输出: 0.5\nprint(retry_delay(5))  # 输出: 8.0\n```",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / obs-iq-06-q11",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "obs-iq-06-q12",
+    "prompt": "为什么模型名称相同也要记录模型版本并做回归评测？",
+    "answer": "**面试直接回答**\n\n供应商可能在同一产品名下更新权重、系统行为或默认参数。记录精确模型标识、请求参数和评测集，才能判断质量、延迟或成本变化来自代码还是模型变化，并在异常时回滚或切换。\n\n**深入解释**\n\n大模型输出具有概率性，单个样例通过不能代表版本兼容。上线前应使用固定测试集比较任务指标、结构化输出通过率、安全拒答、延迟和成本，并保留请求 ID 与版本信息。\n\n**常见追问**\n\n- 回归评测如何处理随机性？\n- 供应商不暴露权重版本时还能记录什么？",
+    "difficulty": "基础",
+    "kind": "应用题",
+    "stage": "S3",
+    "topics": [
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / obs-iq-06-q12",
+    "content_type": "interview",
+    "primary_topic": "llm"
+  },
+  {
+    "id": "obs-iq-07-q04",
+    "prompt": "为什么向量数据库不能作为唯一数据源？",
+    "answer": "**面试直接回答**\n\n向量索引用于相似度检索，可能近似、可重建且缺少完整事务语义；系统仍需保存原文、版本、权限和处理状态。删除或更新文档时，应以主数据记录协调向量索引，而不是只操作向量。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 嵌入向量（Embedding）把文本映射到连续空间，使语义相近内容在所选距离度量下更接近；向量保存的是数值表示，不是原文替代品。\n- 余弦相似度比较方向：cos(θ) = dot(x, y) / (norm(x) × norm(y))。归一化后，点积与余弦排序可等价，但必须确认索引和模型使用的度量契约。\n- 精确检索遍历完整候选保证召回；近似最近邻（Approximate Nearest Neighbor, ANN）以部分召回换速度和规模。FAISS、Chroma 或 pgvector 都必须与原文存储和 Metadata 关联。\n\n**大白话理解（Plain-language Intuition）**\nEmbedding 像把句子的含义放到一张多维地图上，检索是在地图中找近邻。地图坐标不能还原完整原文，所以原文和来源仍要单独保存。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom math import sqrt\n\ndef cosine_similarity(left: list[float], right: list[float]) -> float:\n    if len(left) != len(right):\n        raise ValueError(\"向量维度必须一致\")\n    dot = sum(a * b for a, b in zip(left, right))\n    left_norm = sqrt(sum(value * value for value in left))\n    right_norm = sqrt(sum(value * value for value in right))\n    if left_norm == 0 or right_norm == 0:\n        raise ValueError(\"零向量没有可定义的余弦方向\")\n    return dot / (left_norm * right_norm)\n\nprint(round(cosine_similarity([1, 0], [1, 1]), 3))  # 输出: 0.707\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q04",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q05",
+    "prompt": "Top-K 越大，召回效果一定越好吗？",
+    "answer": "**面试直接回答**\n\nRecall 通常可能提高，但无关候选、延迟和后续成本也会增加，最终答案甚至可能变差。应在评测集上联合观察 Recall@K、重排效果、生成正确性、延迟和成本。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 查询应使用与文档相同且版本一致的 Embedding 模型。Top-K 控制进入候选集的数量：太小可能漏证据，太大会增加噪声、重排成本和上下文占用。\n- Metadata Filter 应在检索阶段强制执行租户、权限、文档版本和时间条件，不能先跨用户召回再依赖模型忽略越权内容。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q05",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q07",
+    "prompt": "为什么先做无框架版本？",
+    "answer": "**面试直接回答**\n\n为了看清数据契约、失败位置和评测边界。理解核心链路后再使用框架可以提高开发效率；若直接依赖黑盒链，出现版本变化、空检索或 Metadata 丢失时很难定位。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 无大型框架版本用于理解并测试每个接口：解析器、切块器、Embedder、Retriever、Reranker 和 Generator。\n- LangChain 或 LlamaIndex 可提供连接器、索引封装、工作流和追踪集成，但抽象层可能随版本变化。业务代码应依赖自己的稳定接口，并保留替换核心组件的能力。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q07",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q08",
+    "prompt": "为什么不能一边看测试集结果一边调 Chunk Size？",
+    "answer": "**面试直接回答**\n\n反复依据测试集调参会让方案间接拟合测试样本，使最终指标过于乐观。应在开发集上选策略，保留独立测试集进行最终评估。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 每个评测问题应记录参考答案或关键要点、支持答案的文档与 Chunk、问题类型和是否应拒答。\n- 题型至少覆盖直接事实、跨段综合、歧义、时效冲突和无答案问题。开发集（Development Set）用于调参数，测试集（Test Set）只在方案固定后使用。\n- 评测答案、标准 Chunk 或测试问题不能进入被评系统的知识库或 Prompt，否则形成评测泄漏（Evaluation Leakage）。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass EvaluationCase:\n    question: str\n    expected_points: tuple[str, ...]\n    relevant_chunk_ids: frozenset[str]\n    should_abstain: bool = False\n\ncase = EvaluationCase(\"保修期多久？\", (\"两年\",), frozenset({\"manual#12\"}))\nprint(case.should_abstain)  # 输出: False\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q08",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q09",
+    "prompt": "为什么不能直接把 BM25 分数与余弦相似度相加？",
+    "answer": "**面试直接回答**\n\n两种分数的范围、分布和含义不同，直接相加会让某一检索器因尺度占优势。可以先归一化并校准权重，或使用 RRF 这类只依赖排名的方法。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- BM25 是稀疏关键词检索（Sparse Retrieval），依据词频、逆文档频率和长度归一化评分，擅长精确术语、编号和专有名词。\n- 向量检索（Dense Retrieval）依据语义表示匹配改写和近义表达，但可能忽略精确数字或罕见 Token。\n- 混合检索（Hybrid Search）结合两类候选。分数尺度不一致时，可使用倒数排名融合（Reciprocal Rank Fusion, RRF）按名次融合，再交给重排器（Reranker）。\n\n**大白话理解（Plain-language Intuition）**\nBM25 像按原词查目录，向量检索像按意思找近义内容。一个擅长“字面完全命中”，一个擅长“换了说法也能找到”，混合检索同时保留两条线索。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom collections import defaultdict\n\ndef reciprocal_rank_fusion(rankings: list[list[str]], constant: int = 60) -> list[str]:\n    scores: dict[str, float] = defaultdict(float)\n    for ranking in rankings:\n        for rank, document_id in enumerate(ranking, start=1):\n            scores[document_id] += 1 / (constant + rank)\n    return sorted(scores, key=scores.get, reverse=True)\n\nprint(reciprocal_rank_fusion([[\"A\", \"B\"], [\"B\", \"C\"]]))  # 输出: ['B', 'A', 'C']\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q09",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q12",
+    "prompt": "答案正确是否意味着 RAG 系统正确？",
+    "answer": "**面试直接回答**\n\n不一定。模型可能依靠参数记忆碰巧答对，却没有使用检索证据；在私有或时效知识中这种答案不可追踪。应同时检查检索证据、忠实度和引用支持。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 正确性（Correctness）比较答案与可信事实；忠实度（Faithfulness）检查答案陈述是否得到提供上下文支持；引用准确性检查引用片段是否真正支撑相邻结论。\n- 无答案评测检查证据不足时是否拒答。模型可能正确地引用了材料，却回答了错误问题；也可能答案事实正确，但不受本次上下文支持，因此指标必须分开。\n\n**最小代码示例（Minimal Example）**\n```python\ndef citation_precision(claim_support: list[bool]) -> float:\n    return sum(claim_support) / len(claim_support) if claim_support else 0.0\n\nprint(citation_precision([True, False, True]))  # 输出: 0.6666666666666666\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q12",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q13",
+    "prompt": "如何验证 LLM Judge 是否可信？",
+    "answer": "**面试直接回答**\n\n建立人工标注子集，计算 Judge 与人工的一致性，检查不同题型和分数段偏差；对模型版本、提示顺序和答案位置做敏感性测试，并保存 Judge 理由供审计。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- LLM-as-a-Judge 使用模型按量表评价答案，适合大规模初筛复杂语言质量，但会受提示、模型偏好、答案长度、位置和自我偏好影响。\n- 量表必须定义评分标准和示例；评审模型、版本和 Prompt 应固定并记录；关键样本和分歧样本需要人工抽查。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q13",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q14",
+    "prompt": "如何证明 Reranker 真正带来提升？",
+    "answer": "**面试直接回答**\n\n固定数据、切块、Embedding 和生成设置，只改变候选数量与重排步骤，在同一评测集比较 Recall、MRR/NDCG、最终答案、延迟和成本，并对改善与退化案例分类分析。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 失败应区分解析、切块、查询、召回、过滤、排序、上下文、生成、引用和权限问题。分类后才能选择对应改动。\n- 每次实验只改变少量变量，记录数据版本、模型、Chunk 配置、Top-K、重排、Prompt、随机参数、指标、延迟和成本。\n- 回归测试（Regression Test）确保修复一种错误后，没有破坏既有正确案例。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom dataclasses import dataclass\n\n@dataclass(frozen=True)\nclass Experiment:\n    name: str\n    chunk_size: int\n    top_k: int\n    use_reranker: bool\n\nbaseline = Experiment(\"baseline\", chunk_size=400, top_k=5, use_reranker=False)\ncandidate = Experiment(\"reranked\", chunk_size=400, top_k=20, use_reranker=True)\nprint(baseline.chunk_size == candidate.chunk_size)  # 输出: True\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q14",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q16",
+    "prompt": "Query Rewrite、Multi-Query 和 HyDE 什么时候改善检索，什么时候反而有害？",
+    "answer": "**面试直接回答**\n\nQuery Rewrite 把含糊或带对话依赖的问题改成可独立检索的查询；Multi-Query 用多个角度扩大召回；HyDE 先生成假设答案或文档再做向量检索。它们可能改善口语、省略和词汇不匹配，但也可能改错实体、引入模型幻觉、扩大噪声和增加延迟，所以必须保留原查询并用评测集验证净收益。\n\n**深入解释**\n\n变换器的输入是原问题、必要的对话状态和权限上下文，输出是一条或多条检索查询，而不是最终答案。多路结果需要去重和融合；高风险实体、数字、时间与过滤条件应尽量从原查询确定性提取，不能让模型自由改写。诊断时分别比较原查询、改写查询和合并结果的 Recall@K、噪声率、延迟与成本。\n\n**常见追问**\n\n- 多轮对话中的历史信息应该全部放进检索查询吗？\n- HyDE 为什么可能检索到“像答案但并不正确”的文档？",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q16",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-07-q17",
+    "prompt": "如何构造能发现真实问题的 RAG 评测集，Hard Negative 有什么作用？",
+    "answer": "**面试直接回答**\n\n评测集应来自真实任务分布，包含问题、允许访问的语料版本、相关证据、可接受答案和资料不足样本，并按来源或案例切分以避免泄漏。Hard Negative 是与问题表面相似但不能支持答案的文档，用来检验检索器和 Reranker 是否真正理解区分点，而不是只匹配关键词。\n\n**深入解释**\n\n先按业务主题、查询类型、文档格式、时间敏感性和权限边界分层抽样，再由人工或受控方法标注证据。困难负例可以来自相邻版本、同名实体、相似条款、BM25 高分误召回或当前模型的 Bad Case；但不能把实际相关文档误标成负例。评测时应同时报告检索指标、生成忠实度、拒答表现和分层结果，不能只看一个总体平均分。\n\n**常见追问**\n\n- 为什么不能一边看测试集结果一边持续修改评测集？\n- LLM 合成问题如何避免只覆盖模型擅长的表达方式？",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S4 / S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / obs-iq-07-q17",
+    "content_type": "interview",
+    "primary_topic": "rag"
+  },
+  {
+    "id": "obs-iq-08-q02",
+    "prompt": "模型已经支持严格结构化输出，还要做业务校验吗？",
+    "answer": "**面试直接回答**\n\n需要。结构校验只能保证字段和类型，不能保证用户有权访问目标资源、金额合理、文件存在或操作安全。权限与业务不变量必须由工具执行层强制检查。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 工具 Schema 应包含稳定名称、明确用途、参数类型、必填项、枚举和边界。模型产生的参数是不可信输入，必须再次进行 Schema、权限和业务规则校验。\n- 工具描述应区分相近工具，避免模型因名称含糊选错；不能在描述中放入密钥或内部安全策略。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom pydantic import BaseModel, Field\n\nclass SearchArguments(BaseModel):\n    query: str = Field(min_length=1, max_length=200)\n    top_k: int = Field(default=5, ge=1, le=20)\n\narguments = SearchArguments.model_validate({\"query\": \"RAG\", \"top_k\": 3})\nprint(arguments.top_k)  # 输出: 3\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / obs-iq-08-q02",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "obs-iq-08-q03",
+    "prompt": "工具调用失败后是否应该让模型自己猜结果？",
+    "answer": "**面试直接回答**\n\n不应该。模型应收到可识别的失败结果，并选择有限重试、替代工具、请求补充信息或明确告知失败。伪造工具结果会破坏系统可审计性和用户信任。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 工具执行层应返回明确的成功数据或结构化错误，包括错误类别、可否重试和安全的用户消息。模型不能把工具失败解释成“已经执行成功”。\n- 工具结果重新进入上下文时应限制长度、去除敏感字段并保留来源标识。\n\n**最小代码示例（Minimal Example）**\n```python\ndef tool_error(code: str, message: str, retryable: bool) -> dict[str, object]:\n    return {\"ok\": False, \"error\": {\"code\": code, \"message\": message, \"retryable\": retryable}}\n\nprint(tool_error(\"NOT_FOUND\", \"document not found\", False)[\"ok\"])  # 输出: False\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / obs-iq-08-q03",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "obs-iq-08-q06",
+    "prompt": "Human-in-the-loop 应放在模型调用前还是工具执行前？",
+    "answer": "**面试直接回答**\n\n通常放在产生具体候选动作之后、真正副作用执行之前，让用户看到实际工具与参数。还应在执行层再次检查确认令牌与参数一致，防止确认后动作被替换。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 发送消息、删除文件、付款、写数据库、执行代码和修改权限属于有副作用或高风险操作，应使用最小权限、白名单、参数预览和人工确认。\n- 确认必须绑定具体工具、参数和过期时间；用户批准“查看订单”不能被复用为“取消订单”。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / obs-iq-08-q06",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "obs-iq-08-q07",
+    "prompt": "低代码平台版和代码版如何比较？",
+    "answer": "**面试直接回答**\n\n从开发速度、可定制性、测试、调试、数据控制、部署边界、供应商锁定和成本比较。平台版适合快速验证，代码版适合复杂业务约束和长期维护；选择取决于需求而非工具偏好。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Dify、Coze 等平台可快速提供模型连接、知识库、工作流、UI 和观测能力，适合原型、演示和标准流程。\n- 代码实现通常具有更强的数据契约、版本控制、测试、部署和底层调试能力。平台版本应作为对照，不替代对检索、权限和工具执行链路的理解。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / obs-iq-08-q07",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "obs-iq-08-q08",
+    "prompt": "多 Agent 为什么不一定比单 Agent 好？",
+    "answer": "**面试直接回答**\n\n多个 Agent 可能重复工作、传播错误、产生冲突并增加 Token 与延迟。应先用单 Agent 或固定工作流建立基线，再用任务成功率、成本和延迟证明多 Agent 的增益。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 多供应商接入需要能力发现、错误映射、价格与速率限制、模型版本和数据边界；不能静默假设参数完全等价。\n- 多 Agent 把职责分配给多个模型角色，会增加消息、状态、一致性、成本和评测难度。只有可证明的角色分工和并行收益才值得采用。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / obs-iq-08-q08",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "obs-iq-08-q09",
+    "prompt": "MCP 与模型 Tool Calling 有什么区别？",
+    "answer": "**面试直接回答**\n\nTool Calling 是模型输出结构化工具请求的能力；模型上下文协议（Model Context Protocol, MCP）规定应用如何发现并调用外部工具、资源和提示。前者解决“模型怎样表达要调用什么”，后者解决“客户端与能力提供方怎样用统一协议连接”。\n\n**深入解释**\n\n一个 MCP 客户端可以把服务器暴露的工具转换成模型可见的 Tool Schema，模型选中工具后，仍由宿主应用执行授权、参数校验、调用和结果回传。MCP 不会自动提供业务权限，也不保证工具安全。\n\n**常见追问**\n\n- 什么时候直接写本地函数比引入 MCP 更合适？\n- MCP 工具调用的授权应由谁执行？",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / obs-iq-08-q09",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "obs-iq-08-q10",
+    "prompt": "Agent 从 Demo 落地到生产环境，最常见的失败点是什么，应该怎样治理？",
+    "answer": "**面试直接回答**\n\n常见失败点不是“模型不够聪明”，而是目标不清、工具权限过大、参数未校验、状态不可恢复、循环无上限、外部副作用不幂等、缺少评测和执行轨迹。治理方法是把确定性规则放回代码：限定工具和权限、验证输入输出、设置步骤/时间/成本预算、持久化检查点、对高风险操作人工确认，并用真实场景与 Bad Case 做回归评测。\n\n**深入解释**\n\n生产 Agent 的输入包括用户请求、可信身份、显式状态和允许使用的工具；输出不仅是自然语言，还包括工具调用、状态变化、外部副作用和审计记录。应区分模型建议与系统授权：模型可以提出动作，但服务端负责权限、Schema、幂等键、重试和补偿。运行时还要观察成功率、工具错误率、步骤数、Token/费用、延迟、人工接管率和越权测试结果。\n\n**常见追问**\n\n- 哪些任务更适合固定工作流而不是 Agent？\n- 工具执行成功但最终回答失败时，系统是否可以自动重跑？\n- 怎样为 Agent 构造端到端评测集？",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / obs-iq-08-q10",
+    "content_type": "interview",
+    "primary_topic": "agent"
+  },
+  {
+    "id": "public-iq-fundamentals-02",
+    "prompt": "为什么测试中不能只断言 HTTP 状态码是 200？",
+    "answer": "**面试直接回答**\n\n状态码只能证明请求被当作成功处理，不能证明返回 Schema、业务数据、权限隔离和副作用正确。还应断言响应结构、关键字段、数据库状态以及错误路径。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 单元测试（Unit Test）隔离验证小范围逻辑；集成测试（Integration Test）验证多个真实组件协作；端到端测试（End-to-end Test）验证完整用户流程。\n- Mock 应替换真正的系统边界，例如模型供应商客户端，而不是把被测函数内部每一步都伪造掉。\n- 调试先稳定复现，再缩小输入和调用范围，最后依据 traceback、日志和断点验证假设。\n- Git commit 应形成可理解、可审查、可回滚的单一改动。\n\n**最小代码示例（Minimal Example）**\n```python\ndef normalize_query(query: str) -> str:\n    return \" \".join(query.strip().split())\n\ndef test_normalize_query() -> None:\n    assert normalize_query(\"  vector   search \") == \"vector search\"\n```\n该示例由 `pytest` 运行；断言通过时函数本身没有输出，pytest 默认显示类似 `1 passed` 的测试摘要，具体格式取决于版本和参数。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / public-iq-fundamentals-02",
+    "content_type": "interview",
+    "primary_topic": "backend"
+  },
+  {
+    "id": "obs-iq-09-q03",
+    "prompt": "`200 OK` 中返回 `{\"success\": false}` 有什么问题？",
+    "answer": "**面试直接回答**\n\n它削弱了 HTTP 状态语义，使网关、监控和客户端无法按协议正确识别失败。应使用合适状态码表示认证、权限、冲突、校验或服务故障，并在 Body 中提供稳定业务错误信息。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 文档上传、查询、会话、引用和删除应使用可理解的资源模型。SSE 适合单向流式 Token 或事件；每个事件需有明确类型，客户端断开时服务端应取消上游任务。\n- OpenAPI 描述请求、响应、认证和错误契约，可生成客户端并驱动接口测试。\n- 存活检查（Liveness）回答“进程是否活着”，就绪检查（Readiness）回答“是否可以接收流量”；后者可检查必要依赖，但不应执行昂贵全链路请求。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "python"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / obs-iq-09-q03",
+    "content_type": "interview",
+    "primary_topic": "backend"
+  },
+  {
+    "id": "public-iq-database-01",
+    "prompt": "为什么数据库去重不能只依赖应用层先查询再插入？",
+    "answer": "**面试直接回答**\n\n两个并发请求可能同时查询到“不存在”，随后都执行插入，形成竞态条件（Race Condition）。应由数据库唯一约束提供最终一致性保障，应用捕获冲突后执行幂等返回或更新逻辑。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 主键（Primary Key）唯一标识记录；唯一约束（Unique Constraint）维护业务唯一性；外键（Foreign Key）维护表间引用关系。\n- 索引（Index）以额外空间和写入成本换取特定查询的更快定位；索引必须围绕真实查询条件设计，不是越多越好。\n- 事务（Transaction）把多步修改作为一个一致性单元提交或回滚。参数化查询把 SQL 结构与数据分开，可避免输入被解释成 SQL 语法。\n\n**最小代码示例（Minimal Example）**\n```python\nimport sqlite3\n\nconnection = sqlite3.connect(\":memory:\")\nconnection.execute(\"CREATE TABLE documents (id INTEGER PRIMARY KEY, source TEXT UNIQUE)\")\nconnection.execute(\"INSERT INTO documents(source) VALUES (?)\", (\"manual.md\",))\ncount = connection.execute(\"SELECT COUNT(*) FROM documents\").fetchone()[0]\nprint(count)  # 输出: 1\n```",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / public-iq-database-01",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "obs-iq-10-q04",
+    "prompt": "为什么数据库可能不使用已经存在的索引？",
+    "answer": "**面试直接回答**\n\n优化器估计顺序扫描更便宜，例如查询匹配大部分表、表很小、统计信息不准确、表达式与索引不匹配，或排序/类型转换破坏了可用条件。应检查计划和数据分布，不应强行认定“有索引就必须使用”。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- `EXPLAIN` 展示优化器计划，`EXPLAIN ANALYZE` 会实际执行并显示真实耗时与行数，因此对写操作使用时必须谨慎。\n- 重点比较估算行数与实际行数、顺序扫描、连接方式、排序、缓存命中以及过滤掉的行数。慢查询不一定缺索引，也可能是低选择性、统计信息过期、返回数据过多或 N+1 查询。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / obs-iq-10-q04",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "obs-iq-10-q06",
+    "prompt": "为什么不能默认用 Redis 分布式锁解决所有并发问题？",
+    "answer": "**面试直接回答**\n\n锁会引入超时、租约、进程暂停、故障转移和正确释放等复杂性。数据库唯一约束、原子更新、幂等键、队列串行化或单机锁常更合适；只有跨进程互斥确实必要时才选择分布式锁并设计故障语义。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 缓存穿透（Cache Penetration）是大量不存在的 Key 每次都访问数据库；可使用输入校验、短 TTL 空值或概率结构缓解。\n- 缓存击穿（Cache Breakdown）是热点 Key 失效时大量请求同时回源；可使用互斥重建、逻辑过期或随机化 TTL 缓解。\n- Cache-aside 常见流程是读缓存未命中后读数据库并回填；写入通常先更新数据库再删除缓存，并接受明确的一致性窗口。",
+    "difficulty": "基础",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / obs-iq-10-q06",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "obs-iq-10-q07",
+    "prompt": "Cache-Aside 模式如何处理数据库与 Redis 的一致性？",
+    "answer": "**面试直接回答**\n\n读取时先查缓存，未命中再查数据库并回填；写入时先更新数据库，再删除相关缓存。它通常提供最终一致性而非强一致性，还要结合 TTL、幂等重试和热点保护处理竞态。\n\n**深入解释**\n\n若先删缓存再写数据库，并发读取可能把旧值重新回填；先写数据库再删缓存更常见，但删除失败仍需重试或事件补偿。对强一致业务，应缩小缓存范围或采用数据库作为唯一判定来源。\n\n**常见追问**\n\n- 为什么通常选择删除缓存而不是直接更新缓存？\n- 缓存删除失败如何补偿？",
+    "difficulty": "进阶",
+    "kind": "工程题",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / obs-iq-10-q07",
+    "content_type": "interview",
+    "primary_topic": "database"
+  },
+  {
+    "id": "obs-iq-11-q01",
+    "prompt": "容器删除重建后数据为什么可能丢失？",
+    "answer": "**面试直接回答**\n\n容器可写层属于该容器实例，删除重建后不会自动保留。持久数据应放入具名卷、绑定挂载或外部数据库，并验证备份与恢复，而不是依赖容器文件系统。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 镜像（Image）是只读构建产物，容器（Container）是镜像的运行实例；卷（Volume）保存独立于容器生命周期的数据；端口映射把宿主端口转发到容器监听端口。\n- 容器可删除重建，因此数据库数据、上传文件和索引不能只保存在容器可写层。容器不是虚拟机，也不应承载人工修改后的不可复现状态。\n\n**最小代码示例（Minimal Example）**\n```dockerfile\nFROM python:3.12-slim\n\nWORKDIR /app\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\nCOPY . .\n\n# 非 root 用户降低应用被利用后的系统权限。\nRUN useradd --create-home appuser && chown -R appuser:appuser /app\nUSER appuser\n\nCMD [\"uvicorn\", \"app.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]\n```\n构建镜像会下载基础镜像和依赖，结果受网络、平台和锁定版本影响。",
+    "difficulty": "基础",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / obs-iq-11-q01",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "obs-iq-11-q02",
+    "prompt": "为什么镜像里不能只依赖运行时环境变量覆盖已经复制进去的 `.env`？",
+    "answer": "**面试直接回答**\n\n镜像层可能仍包含 `.env`，即使最终容器使用其他值，拥有镜像的人仍能提取旧密钥。敏感配置从一开始就不能进入构建上下文或镜像层。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Dockerfile 应固定必要版本、利用构建缓存、减少不必要系统包，并使用非 root 用户运行。\n- `.dockerignore` 缩小构建上下文，避免 `.git`、虚拟环境、缓存、数据集、密钥和本机配置进入镜像。\n- 多阶段构建（Multi-stage Build）可把编译工具留在构建阶段，只复制运行产物到最终镜像。",
+    "difficulty": "基础",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / obs-iq-11-q02",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "obs-iq-11-q03",
+    "prompt": "健康检查成功是否代表整个 RAG 系统正确？",
+    "answer": "**面试直接回答**\n\n不代表。健康检查只回答服务是否存活或关键依赖是否就绪，不替代端到端功能和质量评测。检查过重还可能自身造成负载或因外部模型短暂故障不断重启健康进程。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Docker Compose 描述 API、PostgreSQL、Redis 等多服务开发或单机部署拓扑。服务在 Compose 网络中通过服务名通信，不能把容器内的 `localhost` 当成其他容器。\n- `depends_on` 的启动顺序不等于依赖已经可用；应用仍需就绪检查、连接重试和迁移协调。\n\n**最小代码示例（Minimal Example）**\n```yaml\nservices:\n  api:\n    build: .\n    ports:\n      - \"127.0.0.1:8000:8000\"\n    depends_on:\n      db:\n        condition: service_healthy\n  db:\n    image: pgvector/pgvector:pg17\n    environment:\n      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a local password}\n    healthcheck:\n      test: [\"CMD-SHELL\", \"pg_isready -U postgres\"]\n      interval: 5s\n      timeout: 3s\n      retries: 10\n    volumes:\n      - postgres_data:/var/lib/postgresql/data\n\nvolumes:\n  postgres_data:\n```\n启动会创建容器、网络与卷，属于外部副作用；镜像标签应在实际项目中进一步固定和验证。\n该配置仅为片段，需配套 Dockerfile、应用和本地环境变量；镜像版本是示例背景，不代表最新推荐。不要提交真实密码。",
+    "difficulty": "基础",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / obs-iq-11-q03",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "obs-iq-11-q04",
+    "prompt": "数据库迁移如何回滚？",
+    "answer": "**面试直接回答**\n\n优先采用向后兼容的扩展—迁移—收缩（Expand-Migrate-Contract）流程：先新增兼容结构，再迁移数据和应用，确认稳定后删除旧结构。破坏性迁移不应只依赖自动 `down` 脚本，必须有备份、恢复演练和发布协调。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 持续集成（Continuous Integration, CI）在提交或合并请求上自动执行 lint、类型检查和测试；持续交付/部署（Continuous Delivery/Deployment, CD）把通过验证的同一构建产物推进到环境。\n- 失败测试应阻止发布。密钥通过 CI Secret 注入，不能写入仓库或打印到日志。回滚应部署上一个不可变镜像或版本，而不是在线手改容器。\n\n**最小代码示例（Minimal Example）**\n```yaml\nname: test\non: [push, pull_request]\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-python@v5\n        with:\n          python-version: \"3.12\"\n      - run: pip install -r requirements.txt\n      - run: pytest\n```\n该工作流会在 GitHub Actions 环境安装依赖并运行测试，输出取决于代码与依赖状态。",
+    "difficulty": "基础",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / obs-iq-11-q04",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "obs-iq-11-q05",
+    "prompt": "为什么模型服务的就绪检查可能需要更长时间？",
+    "answer": "**面试直接回答**\n\n进程启动后还要加载权重、分配显存和预热内核。如果过早接流量会大量失败；就绪检查应在模型真正可服务后成功，同时避免因短暂下游故障反复重启进程。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- Pod 是调度单元，Deployment 管理无状态副本与滚动更新，Service 提供稳定访问，ConfigMap/Secret 注入配置，PersistentVolume 支撑持久数据。\n- GPU 推理还涉及节点标签、设备插件、资源请求、模型加载时间、就绪检查和滚动升级容量。Kubernetes 解决编排问题，不自动解决模型质量和成本。\n\n**最小代码示例（Minimal Example）**\n```yaml\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: llm-api\nspec:\n  replicas: 2\n  selector:\n    matchLabels:\n      app: llm-api\n  template:\n    metadata:\n      labels:\n        app: llm-api\n    spec:\n      containers:\n        - name: api\n          image: example/llm-api:1.0.0\n          ports:\n            - containerPort: 8000\n```\n部署会创建集群资源，结果依赖镜像、集群和权限配置。",
+    "difficulty": "基础",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / obs-iq-11-q05",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "obs-iq-11-q06",
+    "prompt": "存活检查（Liveness）和就绪检查（Readiness）有什么区别？",
+    "answer": "**面试直接回答**\n\n存活检查判断进程是否需要重启；就绪检查判断实例当前是否能接收流量。模型仍在加载或关键依赖未准备好时，进程可以存活但未就绪，此时应摘出流量而不是反复重启。\n\n**深入解释**\n\n检查项必须轻量且与决策匹配。把易波动的远程模型 API 放入存活检查，可能造成重启风暴；就绪检查可以包含本实例提供服务所必需的本地状态，但不应替代端到端质量评测。\n\n**常见追问**\n\n- 启动检查（Startup Probe）解决什么问题？\n- 数据库短暂不可用时应该让实例重启吗？",
+    "difficulty": "进阶",
+    "kind": "部署题",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / obs-iq-11-q06",
+    "content_type": "interview",
+    "primary_topic": "deployment"
+  },
+  {
+    "id": "obs-iq-12-q01",
+    "prompt": "`.env` 文件是否安全？",
+    "answer": "**面试直接回答**\n\n`.env` 只是方便本地注入配置，不是安全存储系统。它必须被 Git 忽略、限制文件权限，并避免进入镜像和日志；生产环境应使用部署平台或专门的密钥管理服务注入敏感值。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 可复现项目至少说明环境、依赖、启动命令、输入、输出、配置、数据来源和常见失败方式。\n- 程序入口（Entry Point）负责组装依赖和启动主流程，业务逻辑应放在可导入、可测试的函数或类中。\n- 密钥、账号、本机绝对路径和私人数据不属于源代码配置，应通过环境变量或本地配置注入，并由 `.gitignore` 排除。\n\n**最小代码示例（Minimal Example）**\n```python\nimport os\n\napi_key = os.getenv(\"MODEL_API_KEY\")\nif not api_key:\n    raise RuntimeError(\"缺少 MODEL_API_KEY 环境变量\")\n```\n该示例依赖外部环境变量：变量存在时不打印内容，`api_key` 保存字符串；变量缺失时输出异常 `RuntimeError: 缺少 MODEL_API_KEY 环境变量`。不要为了让程序启动而在代码中写入真实密钥。",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / obs-iq-12-q01",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "obs-iq-12-q02",
+    "prompt": "为什么只在前端隐藏“删除”按钮不算权限控制？",
+    "answer": "**面试直接回答**\n\n客户端由用户控制，可以直接构造 HTTP 请求。服务端必须对每次读取、更新和删除验证身份、动作权限和资源归属，前端隐藏只能改善体验。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 认证（Authentication）确认用户是谁，授权（Authorization）确认用户能做什么。密码应使用专用慢哈希算法并带盐，不可明文或使用普通快速哈希。\n- 多租户查询必须在可信代码或数据库策略中同时限定资源 ID 和租户 ID。只验证“用户已登录”不足以阻止用户 A 访问用户 B 的对象。\n\n**最小代码示例（Minimal Example）**\n```python\ndef can_access(resource_owner_id: int, current_user_id: int) -> bool:\n    return resource_owner_id == current_user_id\n\nprint(can_access(resource_owner_id=42, current_user_id=42))  # 输出: True\nprint(can_access(resource_owner_id=7, current_user_id=42))   # 输出: False\n```",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / obs-iq-12-q02",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "obs-iq-12-q03",
+    "prompt": "为什么数据库工具只允许只读白名单查询？",
+    "answer": "**面试直接回答**\n\n模型生成的查询可能越权、昂贵或具有副作用。最安全的方式是暴露受控业务查询或只读视图，限制表、字段、行数和超时，而不是让模型执行任意 SQL。\n\n**深入解释**\n\n**最小工作流（Minimal Workflow）**\n1. 分类问题并确定需要知识库、只读数据库或公开信息工具。\n2. 生成并验证工具参数，同时检查用户权限和只读白名单。\n3. 执行工具并保存结构化结果；失败时不伪造数据。\n4. 判断证据是否足够，必要时在预算内继续检索。\n5. 生成带来源报告；证据不足或高风险时请求人工确认。",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / obs-iq-12-q03",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "obs-iq-12-q04",
+    "prompt": "执行轨迹应记录什么？",
+    "answer": "**面试直接回答**\n\n记录请求 ID、步骤、模型、工具名、脱敏参数、结果摘要、错误、延迟、Token/成本和审批信息；避免保存密钥与不必要的完整敏感数据。",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / obs-iq-12-q04",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "obs-iq-12-q07",
+    "prompt": "只检查文件扩展名有什么风险？",
+    "answer": "**面试直接回答**\n\n扩展名由客户端提供，可把恶意内容改名为 `.pdf`。还要检查文件签名或实际解析结果、限制大小和资源使用，并在隔离环境中处理不可信文件。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 上传接口限制大小、扩展名、实际内容类型、文件数量、解压规模和存储路径，随机化服务端文件名，防止路径穿越和压缩炸弹。\n- 对外接口需要认证、资源级授权和速率限制；日志和错误响应应移除密钥、密码、Token、个人数据和内部堆栈。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom pathlib import Path\n\nALLOWED_SUFFIXES = {\".txt\", \".md\", \".pdf\"}\n\ndef validate_upload_name(filename: str) -> str:\n    safe_name = Path(filename).name\n    if Path(safe_name).suffix.lower() not in ALLOWED_SUFFIXES:\n        raise ValueError(\"不支持的文件类型\")\n    return safe_name\n\nprint(validate_upload_name(\"../manual.pdf\"))  # 输出: manual.pdf\n```",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / obs-iq-12-q07",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "obs-iq-12-q09",
+    "prompt": "压测为什么要同时记录错误率？",
+    "answer": "**面试直接回答**\n\n系统可以通过快速拒绝或失败获得看似很低的延迟。只有把吞吐、分位延迟、错误率、资源利用率和下游限流共同分析，才能判断真实容量。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 单次成本通常由输入 Token、输出 Token、Embedding、重排和基础设施共同构成；缓存命中率和上下文长度会显著影响成本。\n- P50 是中位延迟，P95 表示 95% 请求不超过该值。平均值会掩盖尾延迟（Tail Latency），用户体验和容量规划更关注分位数与错误率。\n\n**最小代码示例（Minimal Example）**\n```python\ndef estimated_cost(input_tokens: int, output_tokens: int, input_price: float, output_price: float) -> float:\n    return input_tokens / 1_000_000 * input_price + output_tokens / 1_000_000 * output_price\n\nprint(round(estimated_cost(2_000, 500, 1.0, 4.0), 4))  # 输出: 0.004\n```\n示例价格仅用于演示计算，真实价格必须读取当前供应商报价。",
+    "difficulty": "基础",
+    "kind": "安全与可靠性",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / obs-iq-12-q09",
+    "content_type": "interview",
+    "primary_topic": "ops"
+  },
+  {
+    "id": "obs-iq-13-q01",
+    "prompt": "任务失败后为什么不能直接无条件重跑？",
+    "answer": "**面试直接回答**\n\n前一次可能已完成部分副作用，无条件重跑会生成重复 Chunk 或重复计费。任务步骤应幂等、记录检查点，并区分可重试临时错误与不可重试数据错误。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 文档解析和 Embedding 耗时较长，应提交后台任务并立即返回任务 ID。状态机至少区分 `pending`、`running`、`succeeded` 和 `failed`，同时记录重试次数与错误原因。\n- 幂等键或唯一约束避免重复上传产生重复索引。删除文档需协调主记录、Chunk 和向量；跨系统操作无法使用单一事务时，可采用可重试步骤、补偿和最终一致性。\n\n**最小代码示例（Minimal Example）**\n```python\nALLOWED_TRANSITIONS = {\n    \"pending\": {\"running\"},\n    \"running\": {\"succeeded\", \"failed\"},\n    \"failed\": {\"pending\"},\n    \"succeeded\": set(),\n}\n\ndef can_transition(current: str, target: str) -> bool:\n    return target in ALLOWED_TRANSITIONS[current]\n\nprint(can_transition(\"pending\", \"running\"))  # 输出: True\nprint(can_transition(\"succeeded\", \"running\"))  # 输出: False\n```",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / obs-iq-13-q01",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "obs-iq-13-q05",
+    "prompt": "如何用对照实验说明一项系统优化的效果？",
+    "answer": "**面试直接回答**\n\n不要直接声称某组件最好。说明基线、唯一改变的变量、评测集、检索与生成指标、延迟/成本代价和退化案例。假设性示例：若实验显示混合检索加重排提升 MRR 却增加 P95，应继续测量候选数与缓存策略的取舍；不能把假设结果说成个人成果。\n\n**深入解释**\n\n**必讲内容（Required Talking Points）**\n- 数据解析、Metadata、切块和版本管理。\n- 稀疏、向量、混合检索与 Reranker 的对照。\n- 多用户隔离、后台索引、删除一致性和流式回答。\n- Recall@K、MRR/NDCG、正确性、忠实度、引用、拒答、延迟和成本。\n- Docker、CI、日志、指标、压力测试和安全边界。",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / obs-iq-13-q05",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "obs-iq-13-q06",
+    "prompt": "哪些步骤其实不是 Agent？",
+    "answer": "**面试直接回答**\n\n身份认证、权限检查、参数校验、SQL 白名单、工具执行、审批和结果持久化都是确定性代码；模型只负责在允许的工具和状态中提出下一步选择。\n\n**深入解释**\n\n**必讲内容（Required Talking Points）**\n- 为什么任务需要动态选择知识库或只读数据库，而不是固定单链路。\n- Tool Schema、参数与权限验证、错误结果、最大步骤/时间/成本和人工确认。\n- 完整执行轨迹、端到端场景、提示注入与越权测试。",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / obs-iq-13-q06",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "obs-iq-13-q07",
+    "prompt": "如何设计一个支持多租户、可评测、可降级的企业 RAG 服务？",
+    "answer": "**面试直接回答**\n\n我会先明确请求契约和租户边界，再拆为认证授权、文档摄取与版本化、索引、检索与重排、生成、引用、评测和可观测性。在线链路设置超时与降级，离线链路维护评测集；任何检索和缓存都绑定租户身份。\n\n**深入解释**\n\n系统设计回答要先给约束，再画数据流和状态归属：原文数据库是事实源，向量索引是可重建派生数据；查询链路记录版本和证据；模型不可用时可返回检索结果或明确失败。最后讨论容量、延迟、成本、安全、发布和回滚。\n\n**常见追问**\n\n- 索引更新期间如何保证查询一致性？\n- 如何证明多租户隔离没有旁路？\n- 哪些组件可以异步化？",
+    "difficulty": "进阶",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / obs-iq-13-q07",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "obs-iq-13-q08",
+    "prompt": "使用 Coding Agent 完成仓库级改动时，怎样提供上下文、拆分任务并定义验收标准？",
+    "answer": "**面试直接回答**\n\n我会先给出目标、允许修改的范围、现有架构、输入输出合同和不能破坏的行为，再让 Agent 先检查相关代码并提出计划。实现按可独立验证的增量拆分，每一步都要求具体证据，例如测试、静态检查、运行结果或界面状态；最后审查实际 Diff，而不是只看模型总结。\n\n**深入解释**\n\n好的任务合同至少包含：为什么要改、成功是什么、相关入口和依赖、允许与禁止的副作用、错误与边界、测试方法和回滚方式。上下文不是把整个仓库无差别塞给模型，而是先让它定位入口、数据流、状态和第一处失败边界。大功能应按数据合同、核心逻辑、接口、测试和发布步骤拆开，避免一次生成大量无法定位问题的改动。\n\n**常见追问**\n\n- 为什么“把功能完整写出来”通常不是足够的验收标准？\n- 哪些信息不应该直接放进 Coding Agent 的上下文？",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / obs-iq-13-q08",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "obs-iq-13-q09",
+    "prompt": "AI 生成的代码已经能编译、单元测试也通过，为什么仍不能直接上线？",
+    "answer": "**面试直接回答**\n\n编译只证明语法和类型边界基本成立，现有单测只证明被覆盖的样例通过。上线前还要核对需求、审查 Diff、验证集成与端到端流程、失败路径、安全权限、性能、数据迁移、兼容性、可观测性和回滚；AI 代码与人工代码使用同一交付门槛，不能把模型的自信当成证据。\n\n**深入解释**\n\n验证应从变更风险出发：先检查修改是否超出范围、是否引入不存在的 API 或依赖，再覆盖正常、边界和错误路径。涉及外部服务时需要契约或集成测试；涉及数据库时检查迁移、幂等与回滚；涉及权限和敏感数据时做负向测试；涉及性能时在代表性负载下测量。发布后还需通过日志、指标和告警确认真实行为，并保留快速回退路径。\n\n**常见追问**\n\n- 如果没有完整测试环境，最低限度应保留哪些验证证据？\n- AI 修改了大量无关格式或文件时应该怎样处理？",
+    "difficulty": "基础",
+    "kind": "系统设计题",
+    "stage": "S5 / S9",
+    "topics": [
+      "system_design",
+      "project",
+      "backend"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / obs-iq-13-q09",
+    "content_type": "interview",
+    "primary_topic": "system_design"
+  },
+  {
+    "id": "obs-iq-14-q01",
+    "prompt": "一个能运行的 Demo 和可用于求职的项目有什么区别？",
+    "answer": "**面试直接回答**\n\n求职项目除了正常路径，还要展示问题定义、架构选择、错误处理、测试、评测、部署、限制和失败复盘。面试官需要判断候选人是否理解系统，而不是只确认页面能返回答案。\n\n**深入解释**\n\n**核心内容（Core Artifacts）**\n- README 说明问题、目标用户、架构、依赖、启动、配置、测试、演示和限制。\n- 架构图展示服务与外部依赖，数据流图展示一次请求经过解析、检索、模型与返回的顺序。\n- 评测集、指标、对照实验和 Bad Case 提供可验证证据；Docker、测试与部署说明证明别人可以复现。\n- 公开仓库不得包含密钥、私人数据、付费资料、个人绝对路径和无法再获取的本机依赖。",
+    "difficulty": "基础",
+    "kind": "项目表达",
+    "stage": "S9",
+    "topics": [
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "project / obs-iq-14-q01",
+    "content_type": "interview",
+    "primary_topic": "project"
+  },
+  {
+    "id": "obs-iq-14-q03",
+    "prompt": "为什么同一份简历不适合所有 AI 岗位？",
+    "answer": "**面试直接回答**\n\n不同岗位的核心产出不同：AI 后端看服务、数据库与可靠性，RAG 岗看检索与评测，Agent 岗看工具与控制流，算法岗看模型和实验。应在事实不变的前提下调整项目顺序和证据重点。\n\n**深入解释**\n\n**方法（Method）**\n- 收集足够数量的真实 JD，按大模型应用、AI 后端、RAG、Agent 和算法岗位分类。\n- 统计重复出现的必备技能、加分项、业务领域和年限要求，不被单个 JD 的偶然措辞带偏。\n- 针对岗位调整项目排序和关键词，但不写无法证明的技能。\n- 投递记录包含公司、岗位、来源、日期、简历版本、进度、反馈和知识缺口；每 10～15 次投递复盘一次转化率。",
+    "difficulty": "基础",
+    "kind": "项目表达",
+    "stage": "S9",
+    "topics": [
+      "project"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "project / obs-iq-14-q03",
+    "content_type": "interview",
+    "primary_topic": "project"
+  },
+  {
+    "id": "obs-iq-15-q02",
+    "prompt": "为什么连续批处理能提高吞吐？",
+    "answer": "**面试直接回答**\n\n不同请求生成长度不同，静态批次必须等待最长请求完成；连续批处理可在请求结束后立即释放槽位并加入新请求，提高 GPU 计算与显存利用率，但调度和尾延迟需要额外控制。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- vLLM 面向大语言模型高吞吐推理，核心目标是高效管理模型权重、请求批处理和键值缓存（Key-Value Cache, KV Cache）。\n- 连续批处理（Continuous Batching）在已有请求生成过程中动态加入新请求，减少 GPU 空闲；调度仍需在吞吐、公平性和单请求延迟之间权衡。\n\n**最小代码示例（Minimal Example）**\n```python\nfrom vllm import LLM, SamplingParams\n\nmodel = LLM(model=\"your-model-id\")\noutputs = model.generate(\n    [\"用一句话解释 RAG。\"],\n    SamplingParams(temperature=0.2, max_tokens=64),\n)\nprint(outputs[0].outputs[0].text)\n```\n该示例会下载或加载模型并占用显存，输出依赖模型、版本、硬件与采样实现。",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / obs-iq-15-q02",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "obs-iq-15-q03",
+    "prompt": "模型权重已经能放入 GPU，为什么仍会 OOM？",
+    "answer": "**面试直接回答**\n\n运行还需要 KV Cache、激活、临时工作区和框架开销；长上下文与高并发会显著扩大 KV Cache。容量估算不能只看权重文件大小。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 自回归生成每一步都需要此前 Token 的注意力键和值。KV Cache 保存这些中间结果，避免反复计算历史 Token，但显存随并发、序列长度、层数、头数和精度增长。\n- 吞吐量（Throughput）衡量单位时间完成的 Token 或请求，延迟（Latency）衡量单请求等待。增大批次通常提高吞吐，但可能增加排队和首 Token 延迟。\n- 一个便于容量估算的近似式是：`并发批量 × 已缓存 Token 数 × 层数 × 2(K/V) × KV 头数 × Head Dim × 每元素字节数`。实际占用还受分页、块大小、张量并行、对齐和运行时元数据影响，因此公式用于预估，最终必须实测。\n\n**常见追问**\n\n- MHA、GQA 与 MQA 会怎样改变 KV Cache 估算？\n- 为什么相同最大上下文长度下，并发升高仍可能 OOM？",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / obs-iq-15-q03",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "obs-iq-15-q08",
+    "prompt": "什么时候不应该微调？",
+    "answer": "**面试直接回答**\n\n知识频繁变化、数据量和质量不足、问题可通过 RAG 或 Prompt 解决、缺少可靠评测或无法承担训练运维成本时不应急于微调。先建立基线和评测，再证明微调必要。\n\n**深入解释**\n\n**概念与原理（Concept and Mechanism）**\n- 监督微调（Supervised Fine-tuning, SFT）数据应包含清晰任务、输入和理想回答，去重、脱敏并控制模板一致性。训练/验证/测试按来源隔离，避免近重复泄漏。\n- 微调前后必须在独立任务集比较质量、安全、格式遵循、遗忘、延迟和成本；训练 Loss 下降不等于实际应用提升。\n- DeepSpeed 通过 ZeRO 等技术在设备间分片优化器状态、梯度和参数，降低单卡内存，但增加通信、配置和故障排查复杂度。",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / obs-iq-15-q08",
+    "content_type": "interview",
+    "primary_topic": "advanced"
+  },
+  {
+    "id": "obs-iq-15-q12",
+    "prompt": "高并发推理中，QPS、TTFT、吞吐、KV Cache 和显存应该怎样权衡？",
+    "answer": "**面试直接回答**\n\n增大批处理和并发通常能提高每秒 Token 吞吐，但会增加排队、KV Cache 占用和首 Token 延迟；更长上下文也会挤占可服务的并发数。容量规划必须基于真实输入/输出长度分布，同时报告 QPS、TTFT、每 Token 延迟、吞吐、错误率和峰值显存，不能只追求单一最高吞吐。\n\n**深入解释**\n\n请求分为 Prefill 和 Decode 两个阶段：长输入让 Prefill 计算更重，持续生成让 Decode 长时间占用调度槽位和 KV Cache。连续批处理可在请求完成时补入新请求，提高利用率；分页式 KV Cache 可减少碎片，但都不能消除物理显存上限。实际系统需要设置最大上下文、最大输出、并发与队列上限，并按交互式和离线任务分级服务。\n\n**常见追问**\n\n- 为什么只测单请求延迟无法预测线上容量？\n- 怎样避免长请求拖慢大量短请求？",
+    "difficulty": "进阶",
+    "kind": "进阶题",
+    "stage": "Optional",
+    "topics": [
+      "advanced",
+      "llm",
+      "ml",
+      "ops"
+    ],
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "advanced / obs-iq-15-q12",
+    "content_type": "interview",
+    "primary_topic": "advanced"
   },
   {
     "difficulty": "基础",
@@ -171,8 +3048,8 @@
       "llm"
     ],
     "primary_topic": "llm",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#llm",
+    "source_name": "公开版通用示例（独立编写）",
+    "source_ref": "llm / public-iq-llm-02",
     "id": "public-iq-llm-02",
     "prompt": "降低 Temperature 能彻底消除幻觉吗？",
     "answer": "**简答**\n不能。减少采样随机性不修复知识缺失、歧义输入或错误证据。应限定资料范围、校验关键字段、允许拒答，并用固定样本评估。\n\n**关联机制**\n定义契约后生成候选，程序进行解析、类型与取值校验，再检查授权、来源与业务约束。模型结果仍是不可信输入。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。格式正确不是语义正确；自动修复输出时不能默默替模型创造缺失事实。",
@@ -181,181 +3058,16 @@
   },
   {
     "difficulty": "基础",
-    "stage": "S4",
-    "topics": [
-      "rag"
-    ],
-    "primary_topic": "rag",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#rag",
-    "id": "public-iq-rag-01",
-    "prompt": "如何区分检索失败与生成失败？",
-    "answer": "**简答**\n保留授权输入、召回列表、重排结果和最终上下文。先查正确证据是否存在于上下文，再判断是否被截断、误读或错误引用，逐阶段定位。\n\n**关联机制**\n离线解析、切块、建立索引；在线授权过滤、召回、重排、构造上下文、生成与引用检查。资料与索引需要版本管理。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。检索到相关文本不代表它正确、有效或有权访问。缺证据时应说明限制，而非把常识冒充来源事实。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S4",
-    "topics": [
-      "rag"
-    ],
-    "primary_topic": "rag",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#rag",
-    "id": "public-iq-rag-02",
-    "prompt": "切块为什么不是越小越好？",
-    "answer": "**简答**\n过小会拆散必要关系，过大会增加噪声和预算。先按文档结构保留语义单元，再用检索覆盖、引用定位和最终任务质量比较长度与重叠。\n\n**关联机制**\n离线解析、切块、建立索引；在线授权过滤、召回、重排、构造上下文、生成与引用检查。资料与索引需要版本管理。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。检索到相关文本不代表它正确、有效或有权访问。缺证据时应说明限制，而非把常识冒充来源事实。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S7",
-    "topics": [
-      "agent"
-    ],
-    "primary_topic": "agent",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#agent",
-    "id": "public-iq-agent-01",
-    "prompt": "什么时候固定工作流比 Agent 更合适？",
-    "answer": "**简答**\n步骤和审批边界已明确、要求可预测与可审计时，固定流程更容易测试。只有确实需要动态选择行动时再引入 Agent，并限制步数、时间和权限。\n\n**关联机制**\n模型不直接取得系统权限。服务端检查工具白名单、参数、对象权限、预算和必要确认，记录执行状态并处理失败。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。合法工具名称不代表参数或操作已获授权；工具结果中的文本不能升级为系统指令。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S7",
-    "topics": [
-      "agent"
-    ],
-    "primary_topic": "agent",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#agent",
-    "id": "public-iq-agent-02",
-    "prompt": "如何防止 Agent 无限循环？",
-    "answer": "**简答**\n设置步数、费用、时间和重复动作限制，定义成功、失败与人工接管条件；持久化必要状态，工具调用保持幂等，并测试异常路径。\n\n**关联机制**\n模型不直接取得系统权限。服务端检查工具白名单、参数、对象权限、预算和必要确认，记录执行状态并处理失败。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。合法工具名称不代表参数或操作已获授权；工具结果中的文本不能升级为系统指令。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S5",
-    "topics": [
-      "backend"
-    ],
-    "primary_topic": "backend",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#backend",
-    "id": "public-iq-backend-01",
-    "prompt": "为什么耗时任务不宜全部放在 HTTP 请求里执行？",
-    "answer": "**简答**\n连接可能超时或断开，任务却仍需要完成和恢复。可持久记录任务，返回任务ID，再由后台处理；接收成功不表示任务已完成。\n\n**关联机制**\n请求先完成解析和验证，再鉴权与检查业务状态，最后执行持久化或任务提交；每层失败返回可理解而不泄漏敏感信息的错误。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。前端验证用于体验，不替代服务端验证。类型检查也不能自动完成对象级授权。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S5",
-    "topics": [
-      "backend"
-    ],
-    "primary_topic": "backend",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#backend",
-    "id": "public-iq-backend-02",
-    "prompt": "async def 能自动解决 CPU 密集型任务吗？",
-    "answer": "**简答**\n不能。协程主要支持等待期间让出执行权；长时间计算或阻塞调用可能占住事件循环。需要按任务性质选择线程、进程或独立工作服务。\n\n**关联机制**\n请求先完成解析和验证，再鉴权与检查业务状态，最后执行持久化或任务提交；每层失败返回可理解而不泄漏敏感信息的错误。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。前端验证用于体验，不替代服务端验证。类型检查也不能自动完成对象级授权。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S5",
-    "topics": [
-      "database"
-    ],
-    "primary_topic": "database",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#database",
-    "id": "public-iq-database-01",
-    "prompt": "为什么需要数据库唯一约束，而不只是先查询？",
-    "answer": "**简答**\n两个并发请求可能同时查到不存在，再各自插入。唯一约束在存储层处理竞争，应用再按约定解释冲突或返回已有结果。\n\n**关联机制**\n用约束保护唯一性和关联关系，在适当隔离级别下读写状态；处理并发冲突与失败，不能仅依赖应用先查后写。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。本地数据库事务不会自动包含消息队列、对象存储或远程API；跨系统副作用要单独设计恢复与幂等。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S5",
-    "topics": [
-      "database"
-    ],
-    "primary_topic": "database",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#database",
-    "id": "public-iq-database-02",
-    "prompt": "索引有什么代价？",
-    "answer": "**简答**\n索引提供额外访问路径，但占用空间并增加写入维护成本。是否有效取决于过滤、排序、数据分布和查询计划，不能给所有列都加索引。\n\n**关联机制**\n用约束保护唯一性和关联关系，在适当隔离级别下读写状态；处理并发冲突与失败，不能仅依赖应用先查后写。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。本地数据库事务不会自动包含消息队列、对象存储或远程API；跨系统副作用要单独设计恢复与幂等。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
     "stage": "S8",
     "topics": [
       "deployment"
     ],
     "primary_topic": "deployment",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#deployment",
+    "source_name": "公开版通用示例（独立编写）",
+    "source_ref": "deployment / public-iq-deployment-01",
     "id": "public-iq-deployment-01",
     "prompt": "镜像能够保证所有环境完全一致吗？",
     "answer": "**简答**\n不能。镜像固定一部分软件环境，但硬件、驱动、外部服务、挂载数据和运行配置仍会变化。需要记录并验证完整运行条件。\n\n**关联机制**\n存活检查定位需要恢复的进程状态；就绪检查控制是否接流量。模型加载和依赖初始化期间可以存活但未就绪。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。把所有暂时依赖故障都作为重启理由可能形成重启风暴；探测本身也要轻量、有超时。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S8",
-    "topics": [
-      "deployment"
-    ],
-    "primary_topic": "deployment",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#deployment",
-    "id": "public-iq-deployment-02",
-    "prompt": "回滚模型应用时为什么不只换回代码？",
-    "answer": "**简答**\n模型、模板、Prompt、索引和数据结构可能互相依赖。应回到已验证的兼容组合，并单独评估数据迁移是否可逆。\n\n**关联机制**\n存活检查定位需要恢复的进程状态；就绪检查控制是否接流量。模型加载和依赖初始化期间可以存活但未就绪。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。把所有暂时依赖故障都作为重启理由可能形成重启风暴；探测本身也要轻量、有超时。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S8",
-    "topics": [
-      "ops"
-    ],
-    "primary_topic": "ops",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#ops",
-    "id": "public-iq-ops-01",
-    "prompt": "为什么不能默认记录完整 Prompt？",
-    "answer": "**简答**\n其中可能包含文档正文、用户输入和其他敏感数据。优先记录耗时、版本、安全错误类型和脱敏标识；正文采样需明确权限与留存策略。\n\n**关联机制**\n在请求入口和对象访问点校验身份、资源范围与操作类型；跨组件传递可信授权上下文，并记录必要审计信息。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型、上传文档和客户端自报身份都不能替代服务端授权；日志也需要权限和保留策略。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S8",
-    "topics": [
-      "ops"
-    ],
-    "primary_topic": "ops",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#ops",
-    "id": "public-iq-ops-02",
-    "prompt": "重试与熔断有什么不同？",
-    "answer": "**简答**\n重试尝试恢复暂时性失败；熔断在持续失败时暂时停止调用以保护资源。两者都需要预算与恢复策略，并避免重复副作用和重试风暴。\n\n**关联机制**\n在请求入口和对象访问点校验身份、资源范围与操作类型；跨组件传递可信授权上下文，并记录必要审计信息。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型、上传文档和客户端自报身份都不能替代服务端授权；日志也需要权限和保留策略。",
     "kind": "原理与工程题",
     "content_type": "interview"
   },
@@ -366,8 +3078,8 @@
       "system_design"
     ],
     "primary_topic": "system_design",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#system_design",
+    "source_name": "公开版通用示例（独立编写）",
+    "source_ref": "system_design / public-iq-system_design-01",
     "id": "public-iq-system_design-01",
     "prompt": "消息队列为什么仍需要消费端幂等？",
     "answer": "**简答**\n结果已提交但消息尚未确认时发生故障，可能导致重复投递。消费端应检查已有结果、使用唯一约束并保护状态，避免重复业务效果。\n\n**关联机制**\n定义幂等键的作用范围，保存请求摘要与处理结果，使用唯一约束和事务解决竞争；同键不同输入应明确冲突。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。仅用进程内字典不足以处理多进程和重启；不同业务意图不能错误共用同一键。",
@@ -381,41 +3093,11 @@
       "system_design"
     ],
     "primary_topic": "system_design",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#system_design",
+    "source_name": "公开版通用示例（独立编写）",
+    "source_ref": "system_design / public-iq-system_design-02",
     "id": "public-iq-system_design-02",
     "prompt": "Outbox 解决什么，又不解决什么？",
     "answer": "**简答**\n它在数据库事务内记录业务变化和待投递事件，降低数据库与消息发送之间的丢失风险。仍可能重复发送，也不让对象存储自动加入事务，需要消费端幂等与对账。\n\n**关联机制**\n定义幂等键的作用范围，保存请求摘要与处理结果，使用唯一约束和事务解决竞争；同键不同输入应明确冲突。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。仅用进程内字典不足以处理多进程和重启；不同业务意图不能错误共用同一键。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S3",
-    "topics": [
-      "advanced"
-    ],
-    "primary_topic": "advanced",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#advanced",
-    "id": "public-iq-advanced-01",
-    "prompt": "KV Cache 的价值和代价是什么？",
-    "answer": "**简答**\n它复用自回归生成中历史位置的键和值，减少重复计算，但需要额外内存，随缓存长度、驻留序列和模型结构变化。不能把它理解成已缓存最终答案。\n\n**关联机制**\n按代表性输入测量排队、首段响应、完成时间、吞吐和内存峰值，再配置限流、排队、长度上限与降级。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型权重大小不是完整内存需求；缓存、激活和运行开销也要计入。所有容量数字需要绑定具体配置与输入分布。",
-    "kind": "原理与工程题",
-    "content_type": "interview"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S3",
-    "topics": [
-      "advanced"
-    ],
-    "primary_topic": "advanced",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#advanced",
-    "id": "public-iq-advanced-02",
-    "prompt": "量化后模型一定更快且效果不变吗？",
-    "answer": "**简答**\n不一定。收益依赖硬件、内核、量化方法与负载；质量也可能变化。要在目标任务上同时比较准确性、延迟、吞吐和峰值内存。\n\n**关联机制**\n按代表性输入测量排队、首段响应、完成时间、吞吐和内存峰值，再配置限流、排队、长度上限与降级。\n\n**常见追问**\n怎样验证这个设计或判断？\n\n**追问解答**\n从具体输入和预期结果出发，构造正常、边界与失败样本，保留可重复的配置和观测结果。模型权重大小不是完整内存需求；缓存、激活和运行开销也要计入。所有容量数字需要绑定具体配置与输入分布。",
     "kind": "原理与工程题",
     "content_type": "interview"
   }

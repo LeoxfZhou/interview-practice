@@ -1,33 +1,729 @@
 [
   {
+    "id": "kb-python-001",
+    "prompt": "Python 解释器 (Interpreter)、虚拟环境 (Virtual Environment) 与项目依赖是什么关系？",
+    "answer": "定义：Python 解释器是真正执行字节码的程序；虚拟环境是某个项目专用的解释器入口和 site-packages 目录；依赖文件记录项目需要的包及版本约束。\n\n工作机制：激活虚拟环境主要是把它的 bin 目录放到 PATH 最前面；不激活也可以直接运行 `.venv/bin/python`。`python -m pip` 能明确 pip 属于哪个解释器，比盲信系统 `pip` 更稳妥。\n\n```bash\npython3 -m venv .venv\n.venv/bin/python -m pip install -r requirements.txt\n.venv/bin/python -c \"import sys; print(sys.executable)\"\n```\n\n示例输出 (Example Output)：\n```text\n/path/to/project/.venv/bin/python\n```\n\n边界：虚拟环境隔离 Python 包，不隔离操作系统库、端口、进程和网络；完整可复现还要记录 Python 版本、平台和锁定策略。",
     "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S0",
+    "topics": [
+      "python",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "python",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / kb-python-001"
+  },
+  {
+    "id": "kb-python-002",
+    "prompt": "Python 对象、可变性 (Mutability)、引用传递和拷贝如何串起来理解？",
+    "answer": "定义：Python 变量是指向对象的名称。函数传参传递的是对象引用；参数在函数内也是一个局部名称。\n\n- 可变对象 (Mutable Object)：如 list、dict、set，可在保持对象身份不变时修改内容。\n- 不可变对象 (Immutable Object)：如 int、str、tuple，所谓“修改”通常是创建新对象并重新绑定。\n- 浅拷贝 (Shallow Copy) 只复制外层容器；深拷贝 (Deep Copy) 尝试递归复制内部对象。\n\n```python\ndef append_item(items: list[int]) -> None:\n    # append 修改传入的同一个 list 对象。\n    items.append(3)\n\nvalues = [1, 2]\nappend_item(values)\nprint(values)\n```\n\n示例输出 (Example Output)：\n```text\n[1, 2, 3]\n```\n\n常见误区：可变默认参数只在函数定义时创建一次，容易在多次调用间共享状态；应使用 `None` 并在函数内创建新容器。",
+    "difficulty": "基础",
+    "kind": "基础知识",
     "stage": "S1",
     "topics": [
       "python"
     ],
+    "content_type": "foundation",
     "primary_topic": "python",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#python",
-    "id": "public-kb-python-01",
-    "prompt": "生成器 (Generator)",
-    "answer": "**定义 (Definition)**\n生成器按需产生值，而不是先构建完整结果列表。调用含 yield 的函数会得到生成器对象。\n\n**工作机制 (Mechanism)**\n迭代请求触发函数执行，yield 暂停执行并保存局部状态；下一次迭代从暂停点继续。它通常是单次消费的迭代器。\n\n**使用场景与示例 (Example)**\n读取大批记录时，可以逐条清洗并交给下游，不必同时保存所有清洗结果。\n\n**边界与误区 (Limitations)**\n节省的是不必保留全部结果的内存；生成器内部仍可能创建大对象。需要随机访问或反复遍历时，列表可能更合适。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。\n\n**代码示例**\n```python\ndef squares(count):\n    # 每次迭代只产生一个平方数，不提前创建整个列表。\n    for number in range(count):\n        yield number * number\n\nvalues = squares(3)\nprint(next(values))  # 消费第一个值。\nprint(list(values))  # 只收集剩余值；此处会分配列表内存。\nprint(list(values))  # 迭代器已耗尽，不会自动从头开始。\n```\n\n**示例输出 (Example Output)**\n```text\n0\n[1, 4]\n[]\n```",
-    "kind": "基础知识",
-    "content_type": "foundation"
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / kb-python-002"
   },
   {
+    "id": "kb-python-003",
+    "prompt": "Python 异常 (Exception)、日志 (Logging) 和配置 (Configuration) 的职责边界是什么？",
+    "answer": "定义：异常表示程序无法按正常路径继续；日志记录可诊断事件；配置把会随环境变化的值与代码分离。\n\n处理顺序：底层函数保留原始错误上下文，必要时用 `raise ... from ...` 转成业务异常；在能够补偿、重试或转成 HTTP 响应的边界捕获。`finally` 或上下文管理器 (Context Manager) 负责释放资源。\n\n```python\nimport logging\n\nlogger = logging.getLogger(__name__)\n\nclass InvalidDocumentError(ValueError):\n    pass\n\ndef parse_count(raw: str) -> int:\n    try:\n        return int(raw)\n    except ValueError as error:\n        logger.warning(\"invalid count input\")  # 不记录敏感原文。\n        raise InvalidDocumentError(\"数量必须是整数\") from error\n\ntry:\n    parse_count(\"x\")\nexcept InvalidDocumentError as error:\n    print(type(error).__name__, error)\n```\n\n```text\n示例输出 (Example Output)\ninvalid count input\nInvalidDocumentError 数量必须是整数\n```\n\n边界：不使用裸 `except` 吞错；日志可以记录 traceback，但不应记录 API Key、密码或完整用户文档。环境变量是配置源，不是密钥永久存储系统。",
     "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S1",
+    "topics": [
+      "python",
+      "backend",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "python",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / kb-python-003"
+  },
+  {
+    "id": "public-kb-python-01",
+    "prompt": "生成器 (Generator) 和惰性求值 (Lazy Evaluation) 为什么适合流式文件处理？",
+    "answer": "定义：生成器是按需产生值的迭代器 (Iterator)。普通函数用 `return` 结束；生成器函数用 `yield` 产生一个值后暂停，并保留局部状态和执行位置。\n\n```python\nimport json\nfrom collections.abc import Iterator\nfrom pathlib import Path\n\ndef iter_jsonl(path: Path) -> Iterator[dict]:\n    \"\"\"逐行读取 JSONL，不把整个文件放入内存。\"\"\"\n    with path.open(\"r\", encoding=\"utf-8\") as file:\n        for line_number, raw_line in enumerate(file, start=1):\n            line = raw_line.strip()\n            if not line:\n                continue\n            try:\n                yield json.loads(line)\n            except json.JSONDecodeError as error:\n                raise ValueError(f\"第 {line_number} 行不是有效 JSON\") from error\n```\n\n示例输入：\n```text\n{\"id\": 1}\n{\"id\": 2}\n```\n逐次迭代的示例输出 (Example Output)：\n```text\n{'id': 1}\n{'id': 2}\n```\n\n边界：生成器通常只能消费一次；惰性执行会让错误延迟到迭代阶段。它能降低峰值内存，但不会自动让 CPU 计算更快。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S1",
+    "topics": [
+      "python",
+      "rag"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "python",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / public-kb-python-01"
+  },
+  {
+    "id": "kb-python-005",
+    "prompt": "HTTP 请求、状态码、幂等性 (Idempotency) 与重试应如何配合？",
+    "answer": "定义：HTTP 请求由方法、URL、Header 和可选 Body 组成；响应包含状态码、Header 和 Body。GET 用于读取，POST 常用于创建或触发动作，PUT 通常表示整体替换，PATCH 表示局部更新，DELETE 表示删除。\n\n状态码：2xx 成功；400 请求无效；401 未认证；403 已识别但无权限；404 资源不存在；409 状态冲突；422 语义校验失败；429 被限流；5xx 服务端错误。\n\n重试原则：只对短暂且操作安全的失败做有上限的指数退避 (Exponential Backoff) 并加随机抖动 (Jitter)。429 尊重 `Retry-After`；401/403 和参数错误不盲目重试。POST 可能已在服务端生效却丢了响应，重试前需要幂等键 (Idempotency Key) 或业务去重。\n\n边界：连接超时与读取超时是不同阶段；总 Deadline 应覆盖全部尝试，避免多次重试把用户请求拖得过长。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S1",
+    "topics": [
+      "fundamentals",
+      "python",
+      "backend",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "fundamentals",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "fundamentals / kb-python-005"
+  },
+  {
+    "id": "kb-python-006",
+    "prompt": "同步 (Synchronous)、并发 (Concurrency)、并行 (Parallelism) 和协程 (Coroutine) 如何区分？",
+    "answer": "定义：同步描述调用方等待结果；并发是多个任务在时间上交错推进；并行是多个任务同一时刻真正执行；协程是可暂停和恢复的轻量任务。事件循环 (Event Loop) 在协程等待 I/O 时调度其他协程。\n\n```python\nimport asyncio\n\nasync def fetch(name: str, delay: float) -> str:\n    # asyncio.sleep 会交还控制权，不阻塞事件循环线程。\n    await asyncio.sleep(delay)\n    return f\"{name} done\"\n\nasync def main() -> None:\n    results = await asyncio.gather(fetch(\"A\", 0.02), fetch(\"B\", 0.01))\n    print(results)\n\nasyncio.run(main())\n```\n\n示例输出 (Example Output)：\n```text\n['A done', 'B done']\n```\n\n选型：高并发网络 I/O 适合异步客户端；少量阻塞 I/O 可用受控线程池；CPU 密集任务使用多进程、原生扩展或任务队列。`async def` 不会自动把内部同步 I/O 或 CPU 计算变成非阻塞。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S1",
+    "topics": [
+      "python",
+      "backend"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "python",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / kb-python-006"
+  },
+  {
+    "id": "kb-python-007",
+    "prompt": "单元测试 (Unit Test)、Mock、Traceback 和 Git 如何组成可维护的开发闭环？",
+    "answer": "定义：单元测试验证小而确定的业务单元；Mock 用可控替身隔离网络、时间、数据库或模型 API；Traceback 记录异常调用链；Git 记录可审查的变更历史。\n\n测试应覆盖正常、边界和失败路径，并验证可观察输出，而不是紧耦合内部实现。外部 LLM 测试应用 fake/mock 覆盖成功、超时、429、无效 JSON 和流中断；少量显式启用的集成测试再调真实服务。\n\n调试顺序：阅读最底层原始异常和上下文，构造最小复现，通过断点或日志缩小范围，先增加失败测试再修复。Git commit 应对应一个可解释的改动，`.gitignore` 排除虚拟环境、缓存、密钥和运行时数据。\n\n常见误区：过度 Mock 会让测试只证明 Mock 按预期工作；只有单元测试也无法发现 Schema、SQL 和 HTTP 集成边界问题。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S1",
+    "topics": [
+      "python",
+      "backend",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "python",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "python / kb-python-007"
+  },
+  {
+    "id": "public-kb-algorithm-01",
+    "prompt": "时间复杂度 (Time Complexity)、空间复杂度 (Space Complexity) 和常用数据结构如何选择？",
+    "answer": "定义：复杂度描述输入规模 n 增长时，运行步数和额外内存的渐近增长趋势。大 O 记号 (Big-O Notation) 忽略常数和低阶项，不代表某次实测毫秒数。\n\n常见结构：动态数组支持 O(1) 均摊尾部追加和 O(1) 索引；哈希表 (Hash Table) 平均 O(1) 查找，最坏可退化为 O(n)；栈 (Stack) 后进先出；队列 (Queue) 先进先出；堆 (Heap) 用于快速取极值；树和图表示层级或任意关系。\n\n分析步骤：先定义 n，再找主循环、递归层数和数据结构操作；分别说明时间与额外空间，并注明最好、平均或最坏情况。\n\n边界：复杂度不是全部。小数据下还要考虑常数、缓存局部性、I/O、可读性和正确性。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S1",
+    "topics": [
+      "algorithm",
+      "python"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "algorithm",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / public-kb-algorithm-01"
+  },
+  {
+    "id": "kb-algorithm-002",
+    "prompt": "二分查找 (Binary Search)、广度优先搜索 (BFS) 和深度优先搜索 (DFS) 各适合什么问题？",
+    "answer": "二分查找需要有序数据或单调谓词，每次排除一半搜索区间，时间复杂度 O(log n)。稳定写法的关键是先定义区间不变式：闭区间使用 `left <= right` 和 `mid ± 1`；左闭右开使用 `left < right`，两套模板不混用。\n\nBFS 使用队列按层扩展，适合无权图最短步数和层序遍历；DFS 使用递归栈或显式栈沿路径深入，适合连通性、回溯和树形递归。图遍历通常在入队/入栈时标记 visited，避免同一节点被重复加入。\n\n边界：BFS 队列可能存下整层节点；DFS 深度过大可能栈溢出。必须测试空输入、单元素、目标在两端、不存在和图中有环等边界。",
+    "difficulty": "基础",
+    "kind": "基础知识",
     "stage": "S1",
     "topics": [
       "algorithm"
     ],
+    "content_type": "foundation",
     "primary_topic": "algorithm",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#algorithm",
-    "id": "public-kb-algorithm-01",
-    "prompt": "算法复杂度 (Algorithmic Complexity)",
-    "answer": "**定义 (Definition)**\n复杂度描述输入规模增长时，算法所需时间或额外空间的增长趋势。\n\n**工作机制 (Mechanism)**\n先定义输入规模 n，再统计主要操作次数。大 O 给渐近上界，常数和低阶项在渐近分析中通常略去。\n\n**使用场景与示例 (Example)**\n线性扫描最多查看 n 个元素；在有序序列上二分查找，每次排除约一半候选。\n\n**边界与误区 (Limitations)**\n同属 O(n) 的实现实际耗时仍可能差很多。基准测试需要相同输入、环境和测量口径。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "algorithm / kb-algorithm-002"
+  },
+  {
+    "id": "kb-ml-001",
+    "prompt": "PyTorch 张量 (Tensor) 的 shape、dtype、device 以及 Dataset/DataLoader 分别负责什么？",
+    "answer": "定义：Tensor 是规则多维数组。shape 描述各维长度，dtype 决定数值类型、精度和内存，device 决定数据位于 CPU、CUDA GPU 或 MPS。运算中的张量和模型参数通常必须位于同一设备。\n\nDataset 定义“有多少样本”与“按索引如何取一个样本”；DataLoader 负责批处理 (Batching)、打乱 (Shuffle)、多进程加载和拼接样本。\n\n```python\nimport torch\nfrom torch.utils.data import DataLoader, TensorDataset\n\nfeatures = torch.tensor([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]])\nlabels = torch.tensor([0, 1, 1])\ndataset = TensorDataset(features, labels)\nloader = DataLoader(dataset, batch_size=2, shuffle=False)\n\nfor batch_x, batch_y in loader:\n    print(tuple(batch_x.shape), tuple(batch_y.shape))\n```\n\n示例输出 (Example Output)：\n```text\n(2, 2) (2,)\n(1, 2) (1,)\n```\n\n边界：最后一个 batch 可能较小；变长序列需要自定义 collate 或动态 Padding。不应在 `__getitem__` 中反复做昂贵且不可控的网络请求。",
+    "difficulty": "基础",
     "kind": "基础知识",
-    "content_type": "foundation"
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / kb-ml-001"
+  },
+  {
+    "id": "kb-ml-002",
+    "prompt": "PyTorch 的前向传播 (Forward Pass)、损失 (Loss)、反向传播 (Backward Pass) 和优化器步骤如何连接？",
+    "answer": "定义：前向传播根据当前参数计算预测；损失函数衡量预测与目标差异；反向传播用自动微分 (Autograd) 计算梯度；优化器根据梯度更新可训练参数。\n\n```python\nimport torch\nfrom torch import nn\n\ntorch.manual_seed(7)\nmodel = nn.Linear(2, 1)  # 输出未经概率化的 Logits。\ncriterion = nn.BCEWithLogitsLoss()  # 数值上比 Sigmoid + BCELoss 更稳定。\noptimizer = torch.optim.SGD(model.parameters(), lr=0.1)\nfeatures = torch.tensor([[1.0, 2.0], [-1.0, 0.5]])\nlabels = torch.tensor([[1.0], [0.0]])\n\nmodel.train()\noptimizer.zero_grad(set_to_none=True)  # 清理上一次梯度。\nlogits = model(features)               # Forward Pass\nloss = criterion(logits, labels)       # Loss\nloss.backward()                        # Backward Pass\noptimizer.step()                       # Optimizer Step\nprint(tuple(logits.shape), round(loss.item(), 4))\n```\n\n示例输出 (Example Output)：\n```text\n(2, 1) 0.7463\n```\n\n边界：PyTorch 默认累加梯度；普通步骤需清理，但梯度累积 (Gradient Accumulation) 也可以是有意的大批次近似策略。多分类的 CrossEntropyLoss 直接接收 Logits，训练前不先 Softmax。\n\n\n数值输出受 PyTorch 版本、随机初始化实现和设备影响，示例数值不是跨环境保证。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S2",
+    "topics": [
+      "ml"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / kb-ml-002"
+  },
+  {
+    "id": "public-kb-ml-01",
+    "prompt": "训练集、验证集、测试集、数据泄漏 (Data Leakage) 和泛化 (Generalization) 如何理解？",
+    "answer": "训练集用于计算梯度并更新参数；验证集用于选模、调参和早停；测试集只用于最终无偏评估。反复根据测试集修改模型，会把测试集变成隐性验证集。\n\n数据泄漏指训练阶段使用了预测时不可获得的信息，例如切分前用全量数据拟合标准化、时间序列随机切分、重复文档跨训练/测试。\n\n训练和验证都差常是欠拟合 (Underfitting)；训练持续变好而验证停滞或变差常是过拟合 (Overfitting)。先排查数据、标签、损失和优化是否正确，再考虑模型容量、正则化、数据增强和早停。\n\n评测：误报代价高时重视精确率 (Precision)，漏报代价高时重视召回率 (Recall)，需平衡时可用 F1。类别极不平衡时，准确率 (Accuracy) 可能具有误导性。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "project"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / public-kb-ml-01"
+  },
+  {
+    "id": "kb-ml-004",
+    "prompt": "字符 (Character)、词 (Word)、子词 (Subword)、Token 和词表 (Vocabulary) 有什么区别？",
+    "answer": "字符是书写系统的基本符号；词是具有相对完整含义的语言单位；子词是可复用的字符片段；Token 是分词器 (Tokenizer) 实际交给模型的离散单位。Token 可能是字符、完整词、子词、标点或字节片段，不能简单等同于一个汉字或一个英文单词。\n\n词表是 Token 到整数 ID 的映射。词级分词 (Word-level Tokenization) 直观但词表大且容易出现未登录词 (Out-of-vocabulary, OOV)；字符级覆盖强但序列长；子词分词 (Subword Tokenization) 在词表大小、序列长度和 OOV 风险间折中。\n\n常见算法：BPE 重复合并高频相邻单位；WordPiece 按语言模型收益选择合并；Unigram 从大词表出发删除贡献小的单元并用概率选择切分。\n\n边界：Token 数取决于具体模型的分词器和版本；不能用字符数精确推断成本或上下文占用。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "transformer",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / kb-ml-004"
+  },
+  {
+    "id": "kb-ml-005",
+    "prompt": "特殊 Token、填充 (Padding)、截断 (Truncation) 和注意力掩码 (Attention Mask) 分别做什么？",
+    "answer": "特殊 Token 承担结构或控制作用，例如 `[CLS]`、`[SEP]`、`[PAD]` 和文本结束 Token。Padding 把同一 batch 补到相同长度，截断删除超过限制的 Token，Attention Mask 告诉模型哪些位置是真实输入、哪些是 Padding。\n\n```python\n# 示意结果：两条序列补到长度 5。\ninput_ids = [\n    [101, 2769, 1962, 102,   0],\n    [101, 872,  1962, 102,   0],\n]\nattention_mask = [\n    [1, 1, 1, 1, 0],\n    [1, 1, 1, 1, 0],\n]\nprint(len(input_ids[0]), sum(attention_mask[0]))\n```\n\n示例输出 (Example Output)：\n```text\n5 4\n```\n\n工作机制：Padding ID 仍存在于张量中，如果不用 Mask 屏蔽，它可能参与注意力和池化。因果掩码 (Causal Mask) 另外阻止解码位置看到未来 Token，与 Padding Mask 的目的不同。\n\n边界：粗暴截断可能删除结论、否定词或引用；必须根据任务选择左/右截断、分块、滑窗或分层摘要。具体 ID 随 Tokenizer 变化，上例只用于说明形状与 Mask。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "transformer",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / kb-ml-005"
+  },
+  {
+    "id": "kb-ml-006",
+    "prompt": "文本分类、语言建模 (Language Modeling)、文本生成和 RNN 的基本关系是什么？",
+    "answer": "文本分类把整段或 Token 序列映射到离散标签；语言建模学习序列概率，常见自回归 (Autoregressive) 目标是根据前缀预测下一个 Token；文本生成则在推理时反复采样并追加 Token。\n\n循环神经网络 (Recurrent Neural Network, RNN) 通过隐状态递归压缩历史信息，可处理变长序列。主要限制是时间步串行、长距离信息难传递，且容易梯度消失/爆炸。LSTM/GRU 用门控缓解问题，但没有消除串行依赖。\n\nTransformer 用自注意力 (Self-Attention) 直接建模任意位置关系，训练时可对序列位置并行计算，但标准全注意力对序列长度的内存和计算开销近似二次增长。\n\n常见误区：分类与生成不只由模型架构决定，还取决于训练目标、数据格式、输出头和推理策略。",
+    "difficulty": "基础",
+    "kind": "基础知识",
+    "stage": "S2",
+    "topics": [
+      "ml",
+      "transformer"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ml",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ml / kb-ml-006"
+  },
+  {
+    "id": "public-kb-transformer-01",
+    "prompt": "Transformer 的整体结构、自注意力 (Self-Attention) 与 Q/K/V 是怎样协作的？",
+    "answer": "**定义**\nTransformer 是以注意力机制 (Attention Mechanism) 为核心的序列模型。编码器 (Encoder) 负责把输入变成上下文表示；解码器 (Decoder) 在已有上下文和已生成 Token 上预测下一个 Token。现代大语言模型也常只使用解码器。\n\n**直观解释**\n一句话中的每个 Token 都会主动查询“我应该关注谁”。查询 (Query, Q) 表示当前 Token 想找什么，键 (Key, K) 表示每个 Token 能提供什么索引，值 (Value, V) 是真正被汇总的信息。\n\n**工作机制**\n1. 输入乘三个可学习矩阵得到 Q、K、V。\n2. 用 `Q @ K.T / sqrt(d_k)` 得到相关性分数；除以 `sqrt(d_k)` 防止维度大时 softmax 过饱和。\n3. 加上 Padding Mask 或因果掩码 (Causal Mask)，再做 softmax。\n4. 权重乘 V 得到上下文表示。多头注意力 (Multi-Head Attention) 让不同头学习不同关系。\n\n```python\nimport math\nimport torch\n\n# batch=1、序列长度=2、每个向量维度=2\nq = torch.tensor([[[1.0, 0.0], [0.0, 1.0]]])\nk = q.clone()\nv = torch.tensor([[[10.0, 0.0], [0.0, 20.0]]])\n\nscores = q @ k.transpose(-2, -1) / math.sqrt(q.size(-1))\nweights = torch.softmax(scores, dim=-1)\ncontext = weights @ v\nprint(scores.shape, context.shape)\n```\n\n```text\n示例输出 (Example Output)\ntorch.Size([1, 2, 2]) torch.Size([1, 2, 2])\n具体权重会随输入和模型参数变化。\n```\n\n**边界与误区**\n注意力权重不等于严格因果解释；标准全注意力的时间和显存开销随序列长度近似平方增长；Padding Mask 与 Causal Mask 解决的是不同问题。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "transformer",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / public-kb-transformer-01"
+  },
+  {
+    "id": "kb-transformer-002",
+    "prompt": "位置编码 (Positional Encoding)、残差连接 (Residual Connection)、层归一化 (Layer Normalization) 和前馈网络分别解决什么问题？",
+    "answer": "**定义与机制**\n- 位置编码为 Token 注入顺序信息，否则自注意力本身无法区分排列顺序。它可以是固定正弦编码、可学习位置向量或旋转位置编码 (RoPE)。\n- 残差连接把子层输入直接加回输出，形成更短的梯度路径，帮助深层网络训练。\n- 层归一化在单个样本的特征维度上标准化，稳定激活和梯度；它不同于依赖批次统计量的批归一化 (Batch Normalization)。\n- 前馈网络 (Feed-Forward Network, FFN) 对每个位置独立执行非线性变换，通常先扩维、激活、再降维。\n\n**直观解释**\n注意力负责“和谁交换信息”，FFN 负责“每个位置拿到信息后怎样加工”，残差和归一化负责让深网络保持可训练，位置编码补上顺序。\n\n**边界与误区**\nPre-LN 与 Post-LN 的归一化位置不同，会影响深层训练稳定性；位置编码并不会让模型自动拥有无限长度泛化能力；残差连接不是把原输入原封不动地保留到最后。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "ml"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "transformer",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / kb-transformer-002"
+  },
+  {
+    "id": "kb-transformer-003",
+    "prompt": "编码器、解码器、训练与自回归推理有什么差异？KV Cache 又缓存了什么？",
+    "answer": "**模型结构**\nEncoder-only 模型适合理解类任务，如分类和抽取；decoder-only 模型通过因果掩码逐 Token 生成；encoder-decoder 模型先编码输入，再由解码器通过交叉注意力生成输出，常用于翻译和摘要。\n\n**训练与推理**\n训练时通常使用教师强制 (Teacher Forcing)：整段目标序列右移后并行计算每个位置的损失。推理时没有真实后续 Token，只能把刚生成的 Token 追加后继续预测，因此是串行的，并可能产生误差累积。\n\n**KV Cache**\n自回归生成的每一步，历史 Token 对各层产生的 Key 和 Value 不会改变。KV Cache 保存它们，使新一步只计算新 Token 的投影并与历史 K/V 做注意力，避免重复计算整个前缀。缓存会显著占用显存，且不消除超长上下文的带宽和注意力成本。\n\n**边界与误区**\n训练可以高度并行不代表生成也能同样并行；KV Cache 不是模型长期记忆，换请求或重启后通常不存在；采样策略改变输出选择，不改变模型参数。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S2",
+    "topics": [
+      "transformer",
+      "llm",
+      "advanced"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "transformer",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "transformer / kb-transformer-003"
+  },
+  {
+    "id": "kb-llm-001",
+    "prompt": "Token、上下文窗口 (Context Window)、最大输出长度和消息角色如何共同限制一次 LLM 调用？",
+    "answer": "**定义**\nToken 是模型处理文本的离散单位，不一定等于一个汉字或一个英文单词。上下文窗口是一次请求中输入 Token 与可生成 Token 的总预算。System、User、Assistant 消息角色是对话协议中的结构信号，用来表达全局规则、用户请求和历史回复。\n\n**工作机制**\n服务端会把消息模板、工具定义、检索上下文和用户输入一起编码为 Token。通常需要满足 `输入 Token 数 + 最大输出 Token 数 <= 上下文窗口`。达到输出上限或命中 Stop 时，生成会结束。\n\n**使用场景**\n长文档问答应先检索和压缩上下文；多轮对话需要摘要、裁剪或外部记忆；应记录输入、输出 Token 数和结束原因。\n\n**边界与误区**\n上下文放得下不等于模型能同等有效地使用每个位置；消息角色不是权限边界，不能代替服务端鉴权；不同模型和 Tokenizer 的计数不同。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "transformer"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "llm",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / kb-llm-001"
+  },
+  {
+    "id": "kb-llm-002",
+    "prompt": "Temperature、Top-p、Top-k、Stop 与 Seed 分别怎样影响文本生成？",
+    "answer": "**采样参数**\n- Temperature 将 logits 除以温度后再归一化。温度低，分布更尖锐、更稳定；温度高，候选更分散。接近 0 时很多 API 会转为近似贪心选择。\n- Top-k 只在概率最高的 k 个 Token 中采样。\n- Top-p（核采样）保留累计概率达到 p 的最小候选集合，集合大小会随上下文变化。\n- Stop 是输出终止序列，通常不会保证业务 JSON 已经完整。\n- Seed 用来尽量复现实验，但模型版本、后端实现和并发策略变化后仍可能不同。\n\n**选择建议**\n事实抽取和结构化输出优先低随机性并严格校验；创意生成可以提高随机性。一般不要同时激进调整 Temperature、Top-k 和 Top-p，否则难以归因。\n\n**边界与误区**\n降低 Temperature 不能消除幻觉；相同 Seed 不等于跨供应商的强确定性；Stop 是字符串层面的截断工具，不是安全验证。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "transformer"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "llm",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / kb-llm-002"
+  },
+  {
+    "id": "kb-llm-003",
+    "prompt": "幻觉 (Hallucination)、知识截止 (Knowledge Cutoff) 与上下文污染 (Context Contamination) 有什么区别？",
+    "answer": "**定义**\n幻觉是模型生成了看似合理但无法由可靠证据支持的内容。知识截止表示训练数据覆盖存在时间边界。上下文污染是请求中的错误、无关或恶意信息影响了回答。\n\n**识别方式**\n先追踪陈述是否有来源，再区分失败位置：模型是否缺少最新知识、检索是否召回错误文本、上下文是否互相冲突、生成是否越过了证据。\n\n**缓解措施**\n使用可追踪的 RAG、要求逐条引用、资料不足时拒答、结构化验证、外部事实校验和持续评测。最新信息应连接可信实时数据源，而不是要求模型“自己知道”。\n\n**边界与误区**\nRAG 只能提供证据，不能保证模型忠实使用；引用存在不代表引用真的支持结论；更大的模型也不会自动消除错误上下文。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "rag"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "llm",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / kb-llm-003"
+  },
+  {
+    "id": "public-kb-llm-01",
+    "prompt": "Prompt、Few-shot 与结构化输出 (Structured Output) 应如何组成可靠调用？",
+    "answer": "**可靠链路**\nPrompt 要明确任务、输入边界、约束、失败行为和输出格式。Few-shot 用少量高质量输入输出示例展示边界；结构化输出再用 JSON Schema 或 Pydantic 做程序校验。\n\n```python\nfrom pydantic import BaseModel, Field, ValidationError\n\nclass Candidate(BaseModel):\n    name: str = Field(min_length=1)\n    skills: list[str]\n    years: int = Field(ge=0, le=60)\n\nraw = {'name': '示例用户', 'skills': ['Python', 'RAG'], 'years': 2}\ntry:\n    candidate = Candidate.model_validate(raw)\n    print(candidate.name, candidate.years)\nexcept ValidationError as exc:\n    print(exc.errors())\n```\n\n```text\n示例输出 (Example Output)\n示例用户 2\nPydantic v1 可使用 Candidate.parse_obj(raw)。\n```\n\n**失败处理**\n区分网络失败、JSON 语法错误、字段缺失和业务约束失败；只对适合的情况有限重试，必要时保留原始响应供排查。服务端必须重新校验权限和资源归属。\n\n**边界与误区**\nFew-shot 不是训练；Schema 能约束形状但不能保证事实正确；Prompt 中写“不要泄露”不能替代真正的访问控制。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "backend"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "llm",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / public-kb-llm-01"
+  },
+  {
+    "id": "kb-llm-005",
+    "prompt": "云端与本地模型 API 的普通响应、流式响应、错误处理和观测应怎样设计？",
+    "answer": "**统一抽象**\n应用层可以定义统一的请求、增量事件、最终响应和错误类型，再由不同供应商适配器负责鉴权、参数映射和响应解析。这样切换云端或 Ollama 时不会重写业务逻辑。\n\n**调用流程**\n设置连接与读取超时；对 401/403 不重试，对 429 和部分 5xx 读取 Retry-After 后有限重试；流式响应要处理客户端断开并释放连接。记录模型名、请求 ID、延迟、输入/输出 Token、结束原因和错误类别，不记录密钥或不必要的原文。\n\n**选型维度**\n云端通常迭代快、运维少，但有价格、网络和数据合规约束；本地更可控，却要承担硬件、吞吐、升级和容量管理。应以质量、延迟、成本、隐私和可维护性共同决策。\n\n**边界与误区**\n流式只改善首 Token 延迟和感知体验，不一定缩短总生成时间；重试非幂等生成会产生多次计费和不同输出；API Key 不能进入前端、日志或 Git。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S3",
+    "topics": [
+      "llm",
+      "backend",
+      "ops",
+      "advanced"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "llm",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "llm / kb-llm-005"
+  },
+  {
+    "id": "kb-rag-001",
+    "prompt": "RAG 文档解析为什么必须保留元数据 (Metadata)，扫描 PDF 又该怎样处理？",
+    "answer": "**定义**\n文档解析把 TXT、Markdown、PDF 或 Word 转成统一文本和结构。Metadata 至少应保留文档 ID、文件名、页码、标题、章节、更新时间和访问范围。它让检索结果可追踪、可过滤、可引用。\n\n**处理流程**\n先识别文件类型和文本层；清理页眉页脚、乱码、重复文本但保留原文位置；扫描 PDF 没有文本层时走 OCR，并抽样核对数字、否定词和表格。解析失败要记录失败状态，不能把空字符串写进索引。\n\n**数据设计**\n原文件、解析文本、Chunk、向量索引和处理状态应使用稳定 ID 关联。向量库不是唯一事实源，删除或重建索引时仍能从原始存储恢复。\n\n**边界与误区**\n`extract_text()` 返回空不等于文档没有内容；OCR 结果也不是可靠真值；只保存向量会丢失引用与重建能力。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S4",
+    "topics": [
+      "rag",
+      "backend"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "rag",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / kb-rag-001"
+  },
+  {
+    "id": "kb-rag-002",
+    "prompt": "文档切块 (Chunking) 的固定长度、递归、标题和语义策略如何选择？",
+    "answer": "**目标**\nChunking 要让每个片段既包含回答问题所需的完整语义，又足够短以便精确检索和控制上下文成本。\n\n**策略**\n- 固定长度实现简单、吞吐稳定，但可能在语义中间切断。\n- 递归切分按段落、句子、字符逐级回退，是通用基线。\n- 标题切分保留文档层级，适合法规、手册。\n- 语义切分根据嵌入变化找边界，成本更高且需要评测证明收益。\n\nChunk Size 大，信息完整但噪声和成本增加；小，检索更精确但可能缺上下文。Overlap 能缓解边界断裂，也会制造重复召回和索引膨胀。每个 Chunk 必须保留文档、页码、章节和字符范围。\n\n**选择方式**\n根据真实问题建立评测集，比较 Recall@K、MRR、回答质量、索引规模和延迟，而不是凭固定数字选 500 或 1000。\n\n**边界与误区**\n字符数、Token 数和词数不是同一单位；Overlap 越大不一定越好；表格、代码和章节标题通常需要专门规则。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S4",
+    "topics": [
+      "rag"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "rag",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / kb-rag-002"
+  },
+  {
+    "id": "kb-rag-003",
+    "prompt": "嵌入 (Embedding)、余弦相似度 (Cosine Similarity)、向量索引和 Top-K 检索是什么关系？",
+    "answer": "**定义**\nEmbedding 把文本映射为稠密向量，使语义相近文本在向量空间中更接近。余弦相似度比较向量夹角；向量索引加速近邻搜索；Top-K 返回分数最高的 K 个候选。原文并没有被“存进”向量。\n\n```python\nimport math\n\ndef cosine(a, b):\n    if len(a) != len(b):\n        raise ValueError('向量维度必须一致')\n    dot = sum(x * y for x, y in zip(a, b))\n    norm_a = math.sqrt(sum(x * x for x in a))\n    norm_b = math.sqrt(sum(y * y for y in b))\n    if norm_a == 0 or norm_b == 0:\n        raise ValueError('零向量没有可用的余弦方向')\n    return dot / (norm_a * norm_b)\n\nprint(round(cosine([1, 1], [2, 2]), 3))\nprint(round(cosine([1, 0], [0, 1]), 3))\n```\n\n```text\n示例输出 (Example Output)\n1.0\n0.0\n```\n\n**工程要点**\n文档和查询必须用兼容的 Embedding 模型；批量编码提升吞吐；向量、原文、Metadata 和模型版本要关联；更换模型后通常需要重建索引。若所有向量已单位归一化，内积与余弦排序等价。\n\n**边界与误区**\n相似不等于事实正确；Top-K 大会增加召回也会增加噪声；近似最近邻索引用速度换取部分精确性。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S4",
+    "topics": [
+      "rag",
+      "ml"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "rag",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / kb-rag-003"
+  },
+  {
+    "id": "public-kb-rag-01",
+    "prompt": "基础 RAG 的检索、上下文组装、引用和拒答链路怎样形成闭环？",
+    "answer": "**端到端链路**\n1. 对用户问题做最小必要规范化。\n2. 检索候选并保留分数与 Metadata。\n3. 去重、控制 Token 预算，按清晰分隔符组装上下文。\n4. Prompt 要求只依据资料回答，并标注可验证的来源编号。\n5. 将模型引用映射回文档名、章节或页码。\n6. 检索分数低、证据冲突或资料不足时明确拒答。\n\n**诊断**\n如果正确 Chunk 没进入候选，是解析、切块或召回问题；正确 Chunk 已进入但排序靠后，是排序问题；已进入最终上下文仍答错，是上下文组织或生成问题。每一层都应保存可观测证据。\n\n**边界与误区**\n不能仅凭相似度阈值定义“有答案”，阈值要按评测集校准；把所有候选塞进 Prompt 会增加重复、冲突和成本；引用编号必须由服务端映射，不能盲信模型随口生成。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S4",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "rag",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / public-kb-rag-01"
+  },
+  {
+    "id": "kb-rag-005",
+    "prompt": "BM25、混合检索 (Hybrid Retrieval)、Metadata Filter、重排器 (Reranker) 与 Query Rewrite 各处于哪一层？",
+    "answer": "**分层理解**\nBM25 是关键词稀疏检索，对专有名词、编号和精确词匹配强；向量检索擅长语义近似。混合检索分别取候选后做分数归一化或倒数排名融合 (RRF)。Metadata Filter 在检索前或检索中限制用户、时间、文档类型等合法范围。Reranker 对较小候选集做更精细的 query-document 相关性评分。Query Rewrite 改写或扩展问题以改善召回，但要保留原问题以便审计。\n\n**典型顺序**\n权限与 Metadata 过滤 → BM25/向量并行召回 → 融合去重 → Reranker → 选 Top-N 进入上下文。\n\n**取舍**\n增加候选和 Reranker 通常提高质量，也增加延迟和成本。应分别报告召回阶段与最终排序指标，避免只看最终好例子。\n\n**边界与误区**\n不同检索器原始分数不可直接相加；Reranker 无法找回未被第一阶段召回的文档；Rewrite 可能改变意图或扩大越权范围，权限过滤必须独立执行。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S6",
+    "topics": [
+      "rag"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "rag",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / kb-rag-005"
+  },
+  {
+    "id": "kb-rag-006",
+    "prompt": "RAG 评测集、Recall@K、MRR、NDCG、忠实度和 Bad Case 分析如何配合？",
+    "answer": "**评测集**\n每个问题记录答案要点、正确来源文档/Chunk 和题型，覆盖事实题、跨段题、歧义题与无答案题。开发集用于调参，最终测试集保持隔离，不能泄漏到知识库或 Prompt。\n\n**检索指标**\n- Recall@K：前 K 个候选中的相关文档数除以全部相关文档数；只有一个相关文档时等价于命中与否。不要与至少命中一次的 Hit@K 混淆。\n- MRR：第一个相关结果排名倒数的平均，强调首个正确结果尽量靠前。\n- NDCG：支持多级相关性，并考虑整个排序位置。\n\n**生成指标**\n分别评估答案正确性、对检索证据的忠实度、引用支持度和无答案拒答。LLM-as-a-Judge 可扩大评测规模，但会受模型偏好、顺序和提示影响，需要盲评、标尺、重复采样与人工抽查。\n\n**Bad Case 闭环**\n按解析、切块、召回、排序、上下文、生成分类；一次只改变少量变量，保存配置、版本、质量、延迟和成本；把修复后的案例加入回归测试。\n\n**边界与误区**\n高 Recall 不保证回答正确；只展示几个成功样例不是评测；用测试集持续调参会造成评测泄漏。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S6",
+    "topics": [
+      "rag",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "rag",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "rag / kb-rag-006"
+  },
+  {
+    "id": "public-kb-backend-01",
+    "prompt": "FastAPI 中 Router、依赖注入 (Dependency Injection)、Pydantic、状态码、SSE 与 OpenAPI 分别承担什么职责？",
+    "answer": "**职责划分**\nRouter 按业务边界组织路径；Dependency 复用鉴权、数据库会话和配置；Pydantic 负责输入输出结构及校验；HTTP 状态码与统一错误体表达机器可判断的结果；SSE (Server-Sent Events) 用单向事件流传送增量文本；OpenAPI 是接口契约和文档来源。\n\n```python\nfrom fastapi import APIRouter, Depends, FastAPI, HTTPException, status\nfrom pydantic import BaseModel, Field\n\napp = FastAPI()\nrouter = APIRouter(prefix='/documents', tags=['documents'])\n\nclass DocumentIn(BaseModel):\n    title: str = Field(min_length=1, max_length=100)\n\ndef current_user_id() -> int:\n    # 实际项目应解析并验证 Token，而不是返回常量。\n    return 7\n\n@router.post('', status_code=status.HTTP_201_CREATED)\ndef create_document(body: DocumentIn, user_id: int = Depends(current_user_id)):\n    if body.title == 'forbidden':\n        raise HTTPException(status_code=422, detail='标题不可用')\n    return {'id': 1, 'owner_id': user_id, 'title': body.title}\n\napp.include_router(router)\n```\n\n```text\n示例输出 (Example Output)\nPOST /documents {title: RAG Notes}\nHTTP 201 {id: 1, owner_id: 7, title: RAG Notes}\n```\n\n**边界与误区**\n`async def` 路由内直接调用阻塞 I/O 会阻塞事件循环；SSE 要处理心跳、断连和资源清理；自动文档不会替代接口版本治理。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "python",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "backend",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / public-kb-backend-01"
+  },
+  {
+    "id": "public-kb-database-01",
+    "prompt": "PostgreSQL 的主键、外键、唯一约束、索引、事务、迁移和查询计划怎样保证 AI 应用的数据正确性？",
+    "answer": "**数据完整性**\n主键唯一标识行；外键维护用户、文档、Chunk、会话和消息之间的引用；唯一约束可阻止同一用户重复导入同一内容；事务让文档状态和 Chunk 写入要么一起成功、要么一起回滚。Schema 迁移用有版本的脚本安全演进数据库。\n\n**索引与查询计划**\n索引用额外空间和写入成本换查询速度，应围绕真实 WHERE、JOIN 和 ORDER BY 建立。使用 `EXPLAIN (ANALYZE, BUFFERS)` 观察实际行数、扫描方式和 I/O，检查估算偏差与慢查询。\n\n**安全查询**\n所有用户输入通过参数化查询或 ORM 绑定参数，不能拼接 SQL。每次查询都带 `owner_id` 等归属条件，不能先查出资源再只在前端隐藏。\n\n**pgvector**\n向量列、距离运算符和 HNSW/IVFFlat 索引用于向量检索；仍需保存原文和 Metadata，并结合用户过滤。索引参数和精度/延迟取舍应经评测。\n\n**边界与误区**\n有索引不代表一定使用；外键不自动完成所有跨存储一致性；长事务会持锁并增加资源压力。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend",
+      "rag"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "database",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / public-kb-database-01"
+  },
+  {
+    "id": "kb-backend-003",
+    "prompt": "Redis 的数据结构、TTL 和缓存风险应该怎样理解，什么时候不该用 Redis？",
+    "answer": "**定位**\nRedis 是以内存为主的数据存储，适合低延迟缓存、会话、限流计数和任务状态。String 可存缓存值/计数，Hash 适合对象字段，List/Stream 可表达队列或事件流。Key 应带业务命名空间和版本，TTL (Time To Live) 控制过期。\n\n**常见风险**\n缓存穿透是大量查询不存在的键；缓存击穿是热点键过期瞬间大量回源；雪崩是大量键同时过期；双写还会带来数据库与缓存不一致。缓解方法包括空值短缓存、TTL 抖动、请求合并、失效而非盲目双写，以及可接受的最终一致性设计。\n\n**边界与误区**\nRedis 不是“自动加速按钮”；数据量小、访问不频繁或数据库查询已经足够快时，不一定值得增加组件。分布式锁有租约、续期、故障转移等边界，不是所有并发问题的默认答案。持久事实数据不能只依赖可淘汰缓存。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S5",
+    "topics": [
+      "database",
+      "backend",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "database",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "database / kb-backend-003"
+  },
+  {
+    "id": "public-kb-ops-01",
+    "prompt": "身份认证 (Authentication)、授权 (Authorization)、密码哈希与多用户数据隔离应如何组合？",
+    "answer": "**概念边界**\n认证回答“你是谁”，授权回答“你能对哪个资源做什么”。密码要使用带盐且计算成本可调的专用算法，如 Argon2 或 bcrypt，不能明文存储，也不应直接使用普通 SHA-256。\n\n**数据隔离**\n上传、查看、检索、更新和删除每条链路都要在服务端校验资源归属。RAG 检索必须在向量或 Metadata 层加入用户/租户过滤，之后还要验证返回文档的 owner。自动化测试应创建至少两个用户，证明 A 无法通过猜 ID、搜索或删除接口访问 B 的数据。\n\n**最小权限**\n短期 Token 要验证签名、过期时间、发行者和受众；高风险操作可要求二次确认。数据库账户、对象存储和工具调用也只授予必要权限。\n\n**边界与误区**\n前端隐藏按钮不是授权；JWT 只是令牌格式，不自动提供撤销与权限模型；在 Prompt 中写“只看当前用户数据”不能替代查询过滤。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S5",
+    "topics": [
+      "backend",
+      "rag",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "backend",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "backend / public-kb-ops-01"
+  },
+  {
+    "id": "public-kb-system_design-01",
+    "prompt": "后台任务的状态机、幂等重试和数据库/向量索引一致性应怎样设计？",
+    "answer": "**状态机**\n文档上传后先写数据库记录为 `pending`，任务领取后变为 `running`，完成后为 `succeeded`，失败则记录 `failed`、错误类别和重试次数。状态变更应有条件更新，避免两个 Worker 同时处理。\n\n**幂等性**\n用用户 ID、文件哈希和处理版本构造幂等键；重试前检查已完成结果；Chunk 使用稳定 ID 或唯一约束，避免重复索引。只对暂时性错误有限重试，并使用指数退避和抖动。\n\n**跨存储一致性**\n数据库事务无法直接覆盖外部向量库。可先写数据库状态，再执行外部操作并最终标记；失败时通过补偿任务清理孤儿数据。删除采用状态标记、删除向量/文件、最终确认的工作流，并允许重复执行。\n\n**测试**\n覆盖重复上传、Worker 崩溃、解析失败、Embedding 超时、删除一半失败和消息重复投递。\n\n**边界与误区**\n“异步”不等于可靠；队列通常至少一次投递，因此消费者必须幂等；无限重试会放大故障和成本。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S5",
+    "topics": [
+      "system_design",
+      "backend",
+      "rag",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "system_design",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "system_design / public-kb-system_design-01"
+  },
+  {
+    "id": "public-kb-agent-01",
+    "prompt": "工具调用 (Tool Calling / Function Calling) 的 Schema、参数验证、执行结果和错误怎样形成闭环？",
+    "answer": "**闭环**\n应用向模型提供名称明确、说明无歧义、参数受 JSON Schema 约束的工具。模型只负责提出调用意图；服务端必须重新解析和校验参数、检查用户权限与资源归属，然后执行真实工具。结果以结构化工具消息返回模型，再由模型组织最终回复。\n\n**错误设计**\n区分可重试的暂时错误、用户输入错误、权限拒绝和永久失败；结果包含稳定错误码与安全描述，不把栈追踪或密钥交给模型。高风险写操作应显示将要修改的对象并请求人工确认。\n\n**可观测性**\n记录步骤号、工具名、经过脱敏的参数、调用耗时、结果摘要、错误码和关联请求 ID。无法执行时明确失败，绝不能伪造工具结果。\n\n**边界与误区**\nSchema 只约束数据形状，不保证参数安全；模型选择工具不是权限决定；把任意 shell 或 SQL 暴露为通用工具会扩大攻击面。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "agent",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / public-kb-agent-01"
+  },
+  {
+    "id": "kb-agent-002",
+    "prompt": "Agent 的对话历史、短期状态、长期记忆、控制流和执行轨迹有什么区别？",
+    "answer": "**状态层次**\n对话历史是当前会话消息；短期状态是一次任务中的计划、步骤、临时结果；长期记忆是跨会话保存且经过筛选的信息。三者生命周期、可信度和隐私要求不同，不能把所有历史都无限塞进上下文。\n\n**控制流**\n每次循环都要有明确状态转移，并限制最大步骤、总时间、Token/费用和重复工具调用。检测相同动作与参数的循环；超限后返回可解释的中止状态。固定且可枚举的业务流程优先使用状态机或工作流，只有路径需要根据观察动态选择时才考虑 Agent。\n\n**执行轨迹**\n保存模型决策摘要、工具请求、参数、结果、耗时和错误，方便重放和评测；不要默认持久化敏感原始思维或用户秘密。\n\n**边界与误区**\n长期记忆应有写入规则、来源和删除机制；更多自主步骤不等于更智能；低代码平台加快编排，但不消除权限、评测和供应商锁定问题。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "llm",
+      "backend"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "agent",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / kb-agent-002"
+  },
+  {
+    "id": "kb-agent-003",
+    "prompt": "如何为 Agent 或工具工作流设计端到端测试与可靠性评测？",
+    "answer": "**分层测试**\n单元测试验证 Schema、参数规范化、权限和状态转移；用 Mock 隔离 LLM 与外部工具。集成测试验证工具适配器、数据库和队列。端到端场景覆盖正常完成、信息不足、工具超时、权限拒绝、重复调用、模型输出无效和达到步骤上限。\n\n**评测指标**\n任务完成率、正确工具选择率、参数正确率、无授权操作率、平均步骤数、P95 延迟、Token/费用和可恢复失败率。每个案例保存预期关键步骤，但不要把唯一文字路径当成正确答案，因为多个执行路径可能同样有效。\n\n**回归方式**\n固定模型与 Prompt 版本，重复运行处理随机性；变更后比较成功率、成本和失败类别，而不只看总平均。高风险工具在测试环境中使用无副作用替身。\n\n**边界与误区**\n只测试最终自然语言会漏掉中间越权；只靠人工演示无法稳定回归；模拟工具不能完全代替少量真实集成测试。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S7",
+    "topics": [
+      "agent",
+      "ops"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "agent",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "agent / kb-agent-003"
+  },
+  {
+    "id": "kb-ops-001",
+    "prompt": "Docker 镜像、容器、卷、网络、端口映射、Dockerfile 与 Compose 如何组成可复现部署？",
+    "answer": "**定义**\n镜像 (Image) 是只读应用模板；容器 (Container) 是镜像的运行实例；卷 (Volume) 保存需要跨容器生命周期保留的数据；网络让服务按名称通信；端口映射把主机端口转到容器端口。Dockerfile 描述单个镜像构建，Compose 描述 API、PostgreSQL、Redis 等多服务运行关系。\n\n**可靠构建**\n固定基础镜像和依赖版本，使用 `.dockerignore` 排除密钥与无关文件，多阶段构建减少体积，创建非 root 用户。Compose 配置健康检查、依赖就绪、持久卷和内部网络；密钥通过运行时注入。\n\n**边界与误区**\n容器启动不等于应用可用，必须有健康检查；`depends_on` 不总是代表数据库已接受连接；写在容器文件系统中的数据库会随容器删除而丢失；镜像中不能烘焙密钥。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops",
+      "backend"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "deployment",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / kb-ops-001"
+  },
+  {
+    "id": "kb-ops-002",
+    "prompt": "CI/CD 如何把 lint、测试、镜像构建、密钥保护、部署与回滚连接起来？",
+    "answer": "**流水线**\n持续集成 (CI) 在每次提交或合并请求上安装锁定依赖，运行静态检查、单元/集成测试和安全扫描；任何必需步骤失败就阻止合并或部署。成功后构建一次带提交 SHA 的不可变镜像并推送。持续交付/部署 (CD) 将同一镜像推进环境，执行兼容迁移、健康检查和冒烟测试。\n\n**回滚**\n保留上一可用镜像和配置，部署失败时快速切回。数据库迁移优先使用向前/向后兼容的扩展-迁移-收缩策略，因为代码回滚未必能回滚破坏性数据变更。\n\n**密钥**\n使用 CI Secret 存储和最小权限身份，日志做遮蔽；不把 `.env`、Token 或生产数据打包成构建产物。\n\n**边界与误区**\n“测试通过”不代表生产一定安全；使用 `latest` 会降低可追踪性；每次环境重新构建不同镜像会造成漂移。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S8",
+    "topics": [
+      "deployment",
+      "ops",
+      "backend"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "deployment",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "deployment / kb-ops-002"
+  },
+  {
+    "id": "kb-ops-003",
+    "prompt": "结构化日志 (Structured Logging)、指标 (Metrics)、分布式追踪 (Distributed Tracing) 与 Request ID 各回答什么问题？",
+    "answer": "**三类信号**\n日志记录离散事件和上下文，结构化 JSON 便于检索；指标用时间序列回答请求量、错误率、延迟和资源趋势；追踪把一次请求跨 API、检索、数据库和模型的多个 Span 串起来。Request ID 是低成本关联键，应贯穿日志和下游请求。\n\n**LLM/RAG 观测**\n记录模型/Embedding 版本、首 Token 与总延迟、输入输出 Token、估算成本、检索耗时、候选数、拒答和错误类别。敏感原文默认不记录，必要时采样、脱敏并设置保留期限。\n\n**告警**\n围绕用户可感知的服务级指标设置阈值，例如错误率、P95 延迟和任务积压，而不是每个单点波动都报警。\n\n**边界与误区**\n日志不是指标的替代品；只记录异常栈而没有请求上下文难以定位；可观测性不是无限收集数据，成本、隐私和访问权限同样重要。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend",
+      "rag",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ops",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / kb-ops-003"
+  },
+  {
+    "id": "kb-ops-004",
+    "prompt": "提示词注入 (Prompt Injection) 为什么是安全问题，如何保护检索文档、工具和文件上传？",
+    "answer": "**威胁模型**\nPrompt Injection 是不可信输入试图改变模型原有指令或诱导其调用工具。间接注入可以藏在网页、PDF 或检索文档中，因此文档内容必须视为数据而非可信指令。普通 Prompt 写得不好影响质量；注入会跨越权限或数据边界，属于安全问题。\n\n**防护层**\n工具白名单与最小权限；服务端参数、资源归属和业务规则校验；高风险操作人工确认；把系统指令与文档明确分隔；输出到 HTML/SQL/shell 时再做上下文安全处理。文件上传限制类型、大小、数量和存储路径，随机化文件名，在隔离环境解析并防路径穿越。\n\n**数据保护**\n不同用户索引隔离，密钥永不放进模型上下文，日志脱敏，接口鉴权和限流，并用对抗样例持续测试。\n\n**边界与误区**\n只告诉模型“忽略恶意指令”不是安全边界；输入过滤无法枚举所有攻击；RAG 不会自动让文档可信。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "agent",
+      "rag",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ops",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / kb-ops-004"
+  },
+  {
+    "id": "kb-ops-005",
+    "prompt": "超时、有限重试、并发上限、缓存、降级、成本估算和 P50/P95 如何组成可靠性策略？",
+    "answer": "**保护措施**\n为连接、读取和整条请求分别设超时；只对暂时性且安全的失败有限重试，加入指数退避与随机抖动；用信号量、队列和速率限制控制并发，避免下游雪崩。缓存键要包含模型、Prompt 和数据版本，并明确 TTL 与隐私边界。\n\n**降级**\n模型不可用时可以切换已验证备选模型、只返回检索结果、进入异步队列或明确提示稍后重试。降级必须可观测，不能静默返回低质量内容。\n\n**成本与性能**\n单次成本至少估算输入/输出 Token、Embedding、Reranker 和基础设施。P50 是中位体验，P95 暴露尾延迟；压力测试同时观察吞吐、错误率、首 Token 延迟和总延迟。\n\n**边界与误区**\n重试会放大流量和费用；缓存生成答案可能传播过期或越权数据；只优化平均延迟会掩盖少数严重慢请求。",
+    "difficulty": "进阶",
+    "kind": "知识卡",
+    "stage": "S8",
+    "topics": [
+      "ops",
+      "backend",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "ops",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "ops / kb-ops-005"
+  },
+  {
+    "id": "kb-project-001",
+    "prompt": "如何用 30 秒、3 分钟和 10～15 分钟三个层次讲清一个 LLM/RAG 项目？",
+    "answer": "**30 秒**\n说明目标用户和问题、你的职责、核心方案、一个可验证结果。使用占位模板而不是背诵他人经历：为【目标用户】解决【问题】，负责【真实职责】，用【评测集和方法】得到【实际结果】，同时说明延迟、成本和限制。\n\n**3 分钟**\n补充架构数据流、关键取舍、评测集与指标、最有代表性的失败和修复。解释为什么选择当前方案而不是纯向量、全文检索或直接长上下文。\n\n**10～15 分钟**\n展开需求边界、数据、Chunk/Embedding/检索实验、后端与权限、部署观测、Bad Case、成本和下一步。准备架构图、真实日志或实验表作为证据，并能沿任何组件深入。\n\n**表达原则**\n指标给出分母、数据集、基线和测量方式；明确个人贡献与团队贡献；承认限制，不使用无法证明的“工业级、高并发、高精度”。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S9",
+    "topics": [
+      "project",
+      "rag",
+      "llm"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "project",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "project / kb-project-001"
+  },
+  {
+    "id": "kb-project-002",
+    "prompt": "作品集怎样做到可复现、可评测、可演示，并让简历指标经得起追问？",
+    "answer": "**可复现**\nREADME 写明问题、架构、环境、固定依赖、配置模板、启动命令、数据获取和测试。仓库不含密钥或敏感数据；提供最小样例与一键检查，新的环境能重建服务和索引。\n\n**可评测**\n保存隔离评测集、指标定义、实验配置和对比表；展示成功例也展示 Bad Case 与限制。指标要能从脚本重新计算，说明样本量、基线、随机性、延迟环境和成本口径。\n\n**可演示**\n准备短视频或稳定现场流程，以及模型/API 不可用时的备用录屏和离线结果。架构图能从输入追到解析、检索、生成、引用与观测。\n\n**求职映射**\n从真实 JD 统计高频能力，区分 LLM 应用、AI 后端、RAG、Agent 和算法岗位，按目标岗位调整项目重点，但只写自己能现场解释和证明的内容。\n\n**边界与误区**\nStars、UI 漂亮或 Demo 成功不能替代工程证据；把第三方模板改名不等于个人项目；百分比提升没有绝对值与数据量时意义有限。",
+    "difficulty": "基础",
+    "kind": "知识卡",
+    "stage": "S9",
+    "topics": [
+      "project",
+      "ops",
+      "rag",
+      "agent"
+    ],
+    "content_type": "foundation",
+    "primary_topic": "project",
+    "source_name": "通用知识学习笔记（整理与校订）",
+    "source_ref": "project / kb-project-002"
   },
   {
     "difficulty": "基础",
@@ -36,116 +732,11 @@
       "fundamentals"
     ],
     "primary_topic": "fundamentals",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#fundamentals",
+    "source_name": "公开版通用示例（独立编写）",
+    "source_ref": "fundamentals / public-kb-fundamentals-01",
     "id": "public-kb-fundamentals-01",
     "prompt": "超时 (Timeout)",
     "answer": "**定义 (Definition)**\n超时限制某个操作或阶段可以等待多久，防止请求无限占用资源。\n\n**工作机制 (Mechanism)**\n连接、读取、队列等待和整个请求可以有不同预算。各阶段预算应服从总截止时间，重试不能无限重置总预算。\n\n**使用场景与示例 (Example)**\n建立连接成功后，对方仍可能迟迟不返回数据，因此连接超时不能代替读取超时。\n\n**边界与误区 (Limitations)**\n客户端超时不证明服务端没有执行成功。重试有副作用的操作需要幂等设计。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S2",
-    "topics": [
-      "ml"
-    ],
-    "primary_topic": "ml",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#ml",
-    "id": "public-kb-ml-01",
-    "prompt": "数据泄漏 (Data Leakage)",
-    "answer": "**定义 (Definition)**\n训练或评估使用了在目标预测时本不应获得的信息，使评估高估实际能力。\n\n**工作机制 (Mechanism)**\n先按真实应用的数据边界划分集合，再只在训练集拟合预处理与模型；相关实体、近重复样本和时间顺序也要考虑。\n\n**使用场景与示例 (Example)**\n同一文档的近重复段落进入训练和测试两侧，模型可能依靠记忆取得高分。\n\n**边界与误区 (Limitations)**\n不同文件名不证明样本独立；过度根据测试结果反复选方案，也会削弱最终测试的独立性。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S2",
-    "topics": [
-      "transformer"
-    ],
-    "primary_topic": "transformer",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#transformer",
-    "id": "public-kb-transformer-01",
-    "prompt": "自注意力 (Self-Attention)",
-    "answer": "**定义 (Definition)**\n自注意力让序列位置根据与其他位置的相关程度聚合信息。\n\n**工作机制 (Mechanism)**\n输入映射为查询 Q、键 K、值 V；查询与键形成分数，经掩码和归一化后，对值加权求和。因果掩码限制访问未来位置。\n\n**使用场景与示例 (Example)**\n处理“它”时，可从前面的对象描述获取上下文，而不是只看当前词。\n\n**边界与误区 (Limitations)**\n注意力权重不是可靠的因果解释。位置表示、掩码和张量维度错误都可能让模型表面可运行却学习错误关系。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S3",
-    "topics": [
-      "llm"
-    ],
-    "primary_topic": "llm",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#llm",
-    "id": "public-kb-llm-01",
-    "prompt": "结构化输出 (Structured Output)",
-    "answer": "**定义 (Definition)**\n结构化输出要求模型结果符合明确字段与类型，便于程序进一步处理。\n\n**工作机制 (Mechanism)**\n定义契约后生成候选，程序进行解析、类型与取值校验，再检查授权、来源与业务约束。模型结果仍是不可信输入。\n\n**使用场景与示例 (Example)**\n整数类型的数量99可能合法，但如果来源只支持2，仍需要拒绝或复核。\n\n**边界与误区 (Limitations)**\n格式正确不是语义正确；自动修复输出时不能默默替模型创造缺失事实。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S4",
-    "topics": [
-      "rag"
-    ],
-    "primary_topic": "rag",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#rag",
-    "id": "public-kb-rag-01",
-    "prompt": "检索增强生成 (Retrieval-Augmented Generation)",
-    "answer": "**定义 (Definition)**\nRAG 在回答前检索外部资料，将相关证据提供给生成模型。\n\n**工作机制 (Mechanism)**\n离线解析、切块、建立索引；在线授权过滤、召回、重排、构造上下文、生成与引用检查。资料与索引需要版本管理。\n\n**使用场景与示例 (Example)**\n产品手册更新后，可更新检索资料，而不必仅为这次事实变更重新训练生成模型。\n\n**边界与误区 (Limitations)**\n检索到相关文本不代表它正确、有效或有权访问。缺证据时应说明限制，而非把常识冒充来源事实。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S7",
-    "topics": [
-      "agent"
-    ],
-    "primary_topic": "agent",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#agent",
-    "id": "public-kb-agent-01",
-    "prompt": "工具调用 (Tool Calling)",
-    "answer": "**定义 (Definition)**\n工具调用是模型提出结构化操作请求，由程序校验并执行受控工具，再将结果返回给模型。\n\n**工作机制 (Mechanism)**\n模型不直接取得系统权限。服务端检查工具白名单、参数、对象权限、预算和必要确认，记录执行状态并处理失败。\n\n**使用场景与示例 (Example)**\n只读检索工具可返回指定范围的资料；修改数据的工具需要更严格的权限和操作确认。\n\n**边界与误区 (Limitations)**\n合法工具名称不代表参数或操作已获授权；工具结果中的文本不能升级为系统指令。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S5",
-    "topics": [
-      "backend"
-    ],
-    "primary_topic": "backend",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#backend",
-    "id": "public-kb-backend-01",
-    "prompt": "输入契约 (Input Contract)",
-    "answer": "**定义 (Definition)**\n输入契约规定接口接受的数据形状、字段含义、约束和错误处理方式。\n\n**工作机制 (Mechanism)**\n请求先完成解析和验证，再鉴权与检查业务状态，最后执行持久化或任务提交；每层失败返回可理解而不泄漏敏感信息的错误。\n\n**使用场景与示例 (Example)**\n上传请求既检查扩展名，也检查实际格式、大小限制和所属对象权限。\n\n**边界与误区 (Limitations)**\n前端验证用于体验，不替代服务端验证。类型检查也不能自动完成对象级授权。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S5",
-    "topics": [
-      "database"
-    ],
-    "primary_topic": "database",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#database",
-    "id": "public-kb-database-01",
-    "prompt": "事务 (Transaction)",
-    "answer": "**定义 (Definition)**\n事务把一组数据库操作作为一致的提交或回滚单位，避免只完成一部分业务状态变更。\n\n**工作机制 (Mechanism)**\n用约束保护唯一性和关联关系，在适当隔离级别下读写状态；处理并发冲突与失败，不能仅依赖应用先查后写。\n\n**使用场景与示例 (Example)**\n创建任务和写入待发送事件可在同一个数据库事务中完成，避免只记录了任务却丢失投递意图。\n\n**边界与误区 (Limitations)**\n本地数据库事务不会自动包含消息队列、对象存储或远程API；跨系统副作用要单独设计恢复与幂等。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
     "kind": "基础知识",
     "content_type": "foundation"
   },
@@ -156,41 +747,11 @@
       "deployment"
     ],
     "primary_topic": "deployment",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#deployment",
+    "source_name": "公开版通用示例（独立编写）",
+    "source_ref": "deployment / public-kb-deployment-01",
     "id": "public-kb-deployment-01",
     "prompt": "健康检查 (Health Checks)",
     "answer": "**定义 (Definition)**\n健康检查用不同探测确认进程是否存活，以及服务是否具备接收请求的条件。\n\n**工作机制 (Mechanism)**\n存活检查定位需要恢复的进程状态；就绪检查控制是否接流量。模型加载和依赖初始化期间可以存活但未就绪。\n\n**使用场景与示例 (Example)**\n服务已经监听端口，模型仍在加载时，不应向用户宣称业务接口已准备好。\n\n**边界与误区 (Limitations)**\n把所有暂时依赖故障都作为重启理由可能形成重启风暴；探测本身也要轻量、有超时。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S8",
-    "topics": [
-      "ops"
-    ],
-    "primary_topic": "ops",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#ops",
-    "id": "public-kb-ops-01",
-    "prompt": "最小权限 (Least Privilege)",
-    "answer": "**定义 (Definition)**\n每个身份或组件只获得完成当前任务所必需的权限，降低误操作与攻击影响。\n\n**工作机制 (Mechanism)**\n在请求入口和对象访问点校验身份、资源范围与操作类型；跨组件传递可信授权上下文，并记录必要审计信息。\n\n**使用场景与示例 (Example)**\n检索时先限定用户有权访问的文档，不能全库召回后仅在页面隐藏无权内容。\n\n**边界与误区 (Limitations)**\n模型、上传文档和客户端自报身份都不能替代服务端授权；日志也需要权限和保留策略。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
-    "kind": "基础知识",
-    "content_type": "foundation"
-  },
-  {
-    "difficulty": "基础",
-    "stage": "S5",
-    "topics": [
-      "system_design"
-    ],
-    "primary_topic": "system_design",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#system_design",
-    "id": "public-kb-system_design-01",
-    "prompt": "幂等性 (Idempotency)",
-    "answer": "**定义 (Definition)**\n重复执行同一个业务意图，不应产生额外的业务效果；这不要求每次都完全不做计算。\n\n**工作机制 (Mechanism)**\n定义幂等键的作用范围，保存请求摘要与处理结果，使用唯一约束和事务解决竞争；同键不同输入应明确冲突。\n\n**使用场景与示例 (Example)**\n提交任务成功但响应丢失时，客户端使用相同键重试，服务器返回原任务而不是创建第二个。\n\n**边界与误区 (Limitations)**\n仅用进程内字典不足以处理多进程和重启；不同业务意图不能错误共用同一键。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",
     "kind": "基础知识",
     "content_type": "foundation"
   },
@@ -201,8 +762,8 @@
       "advanced"
     ],
     "primary_topic": "advanced",
-    "source_name": "公开版独立编写的通用学习示例",
-    "source_ref": "scripts/build_sample_bank.py#advanced",
+    "source_name": "公开版通用示例（独立编写）",
+    "source_ref": "advanced / public-kb-advanced-01",
     "id": "public-kb-advanced-01",
     "prompt": "推理预算 (Inference Budget)",
     "answer": "**定义 (Definition)**\n推理预算限制单次请求和整体服务可以使用的上下文、输出长度、时间、并发及资源。\n\n**工作机制 (Mechanism)**\n按代表性输入测量排队、首段响应、完成时间、吞吐和内存峰值，再配置限流、排队、长度上限与降级。\n\n**使用场景与示例 (Example)**\n更大的批量可能提高总吞吐，却增加某个请求的等待，因此不能只看每秒生成总量。\n\n**边界与误区 (Limitations)**\n模型权重大小不是完整内存需求；缓存、激活和运行开销也要计入。所有容量数字需要绑定具体配置与输入分布。\n\n**学习检查**\n能够给出输入、处理中间状态和输出，并解释一种失败情况；不要只背术语。",

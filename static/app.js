@@ -89,6 +89,7 @@ const topicInitials = {
   ops: "Ops",
   system_design: "SD",
   advanced: "+",
+  project: "述",
 };
 
 async function request(url, options = {}) {
