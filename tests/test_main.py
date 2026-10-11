@@ -49,11 +49,11 @@ class StaticAssetCacheTests(unittest.TestCase):
     def test_home_uses_versioned_static_assets_and_disables_cache(self) -> None:
         html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
         response = self.apply_cache_middleware("/")
-        self.assertIn('/static/styles.css?v=1.7.0', html)
-        self.assertIn('/static/app.js?v=1.7.0', html)
+        self.assertIn('/static/styles.css?v=1.7.1', html)
+        self.assertIn('/static/app.js?v=1.7.1', html)
         self.assertEqual(response.headers["cache-control"], "no-store, max-age=0")
         self.assertEqual(response.headers["pragma"], "no-cache")
-        self.assertEqual(app.version, "1.7.0")
+        self.assertEqual(app.version, "1.7.1")
 
     def test_header_uses_brand_mark_for_directory_and_exposes_reset(self) -> None:
         html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")

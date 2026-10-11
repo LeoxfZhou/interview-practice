@@ -8,7 +8,7 @@
       content="面向 LLM Application Engineer 的本地面试答题本"
     />
     <title>面试答题本 · Interview Deck</title>
-    <link rel="stylesheet" href="/static/styles.css?v=1.7.0" />
+    <link rel="stylesheet" href="/static/styles.css?v=1.7.1" />
   </head>
   <body>
     <div class="ambient ambient-one"></div>
@@ -196,8 +196,8 @@
             下一题
             <kbd>N</kbd>
           </button>
+          <button class="primary-button is-hidden" id="completionHomeButton" type="button">返回首页</button>
         </div>
-        <button class="primary-button is-hidden" id="completionHomeButton" type="button">返回首页</button>
         <div class="quiz-actions is-hidden" id="reviewActions">
           <button class="secondary-button" id="reviewWrongButton" type="button">重新练习错题</button>
           <button class="primary-button" id="reviewRemainingButton" type="button">练习未答题 + 错题</button>
@@ -252,6 +252,6 @@
     </aside>
 
     <div class="toast is-hidden" id="toast" role="status"></div>
-    <script src="/static/app.js?v=1.7.0" defer></script>
+    <script src="/static/app.js?v=1.7.1" defer></script>
   </body>
 </html>

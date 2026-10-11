@@ -848,7 +848,6 @@ summary:focus-visible {
 .result-filter button { padding: 10px 24px; min-height: 42px; }
 .result-filter button[aria-pressed="true"] { border-color: var(--green); background: #e7f3eb; }
 .result-filter button[data-result-filter="wrong"][aria-pressed="true"] { color: #a3302c; background: #fbe9e7; }
-#completionHomeButton { margin-top: 16px; }
 
 .secondary-button {
   color: var(--ink);
